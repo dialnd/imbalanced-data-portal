@@ -1,0 +1,23 @@
+ode_ranking:
+    resource: "@ODERankingBundle/Resources/config/routing.yml"
+    prefix:   /
+
+ode_analysis:
+    resource: "@ODEAnalysisBundle/Resources/config/routing.yml"
+    prefix:   /
+
+ode_dataset:
+    resource: "@ODEDatasetBundle/Resources/config/routing.yml"
+    prefix:   /
+
+ode_user:
+    resource: "@ODEUserBundle/Resources/config/routing.yml"
+    prefix:   /
+
+app:
+    resource: @AppBundle/Controller/
+    type:     annotation
+
+homepage:
+    path:      /
+    defaults:  { _controller: AppBundle:Default:index }

@@ -1,0 +1,6 @@
+# src/ODE/UserBundle/Resources/config/services.yml
+services:
+    acme_user.registration.form.type:
+        class: ODE\UserBundle\Form\Type\RegistrationFormType
+        tags:
+            - { name: form.type, alias: ode_user_registration }

@@ -1,0 +1,23 @@
+ode_analysis_homepage:
+    path:     /analysis
+    defaults: { _controller: ODEAnalysisBundle:FormFlow:createAnalysis }
+
+ode_run_analysis:
+    pattern:  /analysis/run
+    defaults: { _controller: ODEAnalysisBundle:Default:runAnalysis}
+
+ode_wait_result:
+    pattern:  /analysis/result
+    defaults: { _controller: ODEAnalysisBundle:Default:waitForAnalysisResult}
+
+ode_check_result:
+    pattern:  /analysis/check
+    defaults: { _controller: ODEAnalysisBundle:Default:checkIfAnalysisIsDone}
+
+ode_get_model_form:
+    pattern:  /analysis/getmodelform
+    defaults: { _controller: ODEAnalysisBundle:FormFlow:getModelForm}
+
+ode_report:
+    pattern:  /analysis/report
+    defaults: { _controller: ODEAnalysisBundle:Default:generateReport}
