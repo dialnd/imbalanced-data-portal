@@ -1,3 +1,27 @@
 ode_interactive_homepage:
     path:     /hello/{name}
     defaults: { _controller: ODEInteractiveBundle:Default:index }
+
+ode_dataset_page:
+    path:     /select_dataset
+    defaults: { _controller: ODEInteractiveBundle:Default:createDataset }
+
+ode_sampling_page:
+    path:     /sampling
+    defaults: { _controller: ODEInteractiveBundle:Default:createSampling }
+
+ode_preprocessing_page:
+    path:     /preprocessing
+    defaults: { _controller: ODEInteractiveBundle:Default:createPreprocess }
+
+ode_reduction_page:
+    path:     /reduction
+    defaults: { _controller: ODEInteractiveBundle:Default:createReduction }
+
+ode_model_page:
+    path:     /select_model
+    defaults: { _controller: ODEInteractiveBundle:Default:createModel }
+
+ode_dataset_page:
+    path:     /model_analysis
+    defaults: { _controller: ODEInteractiveBundle:Default:createAnalysis }
