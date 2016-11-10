@@ -1,0 +1,3 @@
+ode_interactive_homepage:
+    path:     /hello/{name}
+    defaults: { _controller: ODEInteractiveBundle:Default:index }
