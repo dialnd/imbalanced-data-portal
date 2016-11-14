@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets
+    'assets/css/plugins/iCheck/custom.css'
+    'assets/css/plugins/steps/jquery.steps.css'
+    'assets/css/plugins/noUiSlider/jquery.nouislider.css'
+    'assets/css/plugins/qTip/jquery.qtip.css' filter='cssrewrite' output='compiled/css/create-analysis.css' %}
+    <link href="{{ asset_url }}" rel="stylesheet" type="text/css" />
+    {% endstylesheets %}
+{% endblock %}
+
+{% block body %}
+
+{% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+    <br><br>
+    <div class="row">
+        <div class="col-lg-10 col-lg-offset-1">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h5>Dataset</h5>
+                </div>
+                <div class="ibox-content">
+                    <h2>Dataset</h2>
+
+                    <form id="form" action="#" class="wizard-big">
+                        <h1>Dataset</h1>
+                        <section>
+                            <h2>Select the dataset:</h2>
+
+                            <div class="row">
+                                <div class="col-lg-5">
+                                    <div class="form-group">
+                                        <select id="dataset" name="dataset" class="form-control required">
+                                            {% for dataset in datasets %}
+                                                {% if current && dataset.id == current %}
+                                                <option value={{ dataset.id|e }} selected>{{ dataset.name|e }}</option>
+                                                {% else %}
+                                                <option value={{ dataset.id|e }}>{{ dataset.name|e }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-lg-5 col-lg-offset-1">
+                                    Add dataset description here.
+                                </div>
+                            </div>
+                        </section>
+                        <input type="submit" value="Select" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="wrapper wrapper-content animated fadeIn">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content text-center p-md">
+                        <h2><span>Sorry! You must be logged in to access this area.</span></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row text-center">
+            <a href="/login" class="btn btn-default btn-sm"><span class="fa fa-sign-in"></span>&nbsp;&nbsp;Login</a>
+            <a href="/register" class="btn btn-default btn-sm"><span class="fa fa-user-plus"></span>&nbsp;&nbsp;Register</a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
