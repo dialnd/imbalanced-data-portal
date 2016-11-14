@@ -74,3 +74,18 @@
 {% endif %}
 
 {% endblock %}
+
+
+{% block scripts %}
+    {{ parent() }}
+    {% javascripts
+    'assets/js/plugins/steps/jquery.steps.js'
+    'assets/js/plugins/validate/jquery.validate.min.js'
+    'assets/js/plugins/noUiSlider/jquery.nouislider.all.js'
+    'assets/js/plugins/qTip/jquery.qtip.js'
+    'assets/js/plugins/iCheck/icheck.js' output='compiled/js/create-analysis.js'
+    'assets/js/form_helpers.js' %}
+    <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+
+{% endblock %}
