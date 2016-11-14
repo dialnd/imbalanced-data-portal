@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets
+    'assets/css/plugins/iCheck/custom.css'
+    'assets/css/plugins/steps/jquery.steps.css'
+    'assets/css/plugins/noUiSlider/jquery.nouislider.css'
+    'assets/css/plugins/qTip/jquery.qtip.css' filter='cssrewrite' output='compiled/css/create-analysis.css' %}
+    <link href="{{ asset_url }}" rel="stylesheet" type="text/css" />
+    {% endstylesheets %}
+{% endblock %}
+
+{% block body %}
+
+{% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+    <br><br>
+    <div class="row">
+        <div class="col-lg-10 col-lg-offset-1">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h5>Dimensionality Reduction</h5>
+                </div>
+                <div class="ibox-content">
+                    <h2>Dimensionality Reduction</h2>
+
+                    <form id="form" action="#" class="wizard-big">
+                        <h1>Dimensionality Reduction</h1>
+                        <section>
+                            <h2>Select reduction parameters:</h2>
+
+                            <div class="col-lg-3">
+                                <label>Principal Component Analysis: <i
+                                            class="fa fa-question-circle parameter_value_off"
+                                            id="q4"></i></label>
+
+                                <div class="radio i-checks">
+                                    <label><input class="required" name="pca" type="radio" value="1"> True
+                                    </label>
+                                    <br>
+                                    <label><input checked class="required" name="pca" type="radio" value="0">
+                                        False </label>
+                                </div>
+
+                                <div class="row text-center">
+                                    <label>Number of Components = <span class="example-val parameter_value_off"
+                                                                        id="n_components-value"></span></label>
+
+                                    <div class="col-lg-10 col-lg-offset-1">
+                                        <div id="pca-slider"></div>
+                                        <input id="n_components" name="n_components" type="hidden" value="">
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <input type="submit" value="Select" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="wrapper wrapper-content animated fadeIn">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content text-center p-md">
+                        <h2><span>Sorry! You must be logged in to access this area.</span></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row text-center">
+            <a href="/login" class="btn btn-default btn-sm"><span class="fa fa-sign-in"></span>&nbsp;&nbsp;Login</a>
+            <a href="/register" class="btn btn-default btn-sm"><span class="fa fa-user-plus"></span>&nbsp;&nbsp;Register</a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+    {{ parent() }}
+    {% javascripts
+    'assets/js/plugins/steps/jquery.steps.js'
+    'assets/js/plugins/validate/jquery.validate.min.js'
+    'assets/js/plugins/noUiSlider/jquery.nouislider.all.js'
+    'assets/js/plugins/qTip/jquery.qtip.js'
+    'assets/js/plugins/iCheck/icheck.js' output='compiled/js/create-analysis.js'
+    'assets/js/form_helpers.js' %}
+    <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+
+{% endblock %}
