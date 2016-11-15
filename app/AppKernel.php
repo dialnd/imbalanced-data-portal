@@ -21,6 +21,7 @@ class AppKernel extends Kernel
             new ODE\UserBundle\ODEUserBundle(),
             new ODE\DatasetBundle\ODEDatasetBundle(),
             new ODE\AnalysisBundle\ODEAnalysisBundle(),
+            new ODE\InteractiveBundle\ODEInteractiveBundle(),
             new ODE\RankingBundle\ODERankingBundle(),
             //new Vich\UploaderBundle\VichUploaderBundle(),
         );

@@ -19,46 +19,44 @@
         <div class="col-lg-10 col-lg-offset-1">
             <div class="ibox">
                 <div class="ibox-title">
-                    <h5>Sampling</h5>
+                    <h2>Sampling</h2>
                 </div>
                 <div class="ibox-content">
-                    <h2>Sampling</h2>
 
-                    <form id="form" action="#" class="wizard-big">
-                        <h1>Dataset</h1>
+                    <form id="form" action="/interactive/preprocessing" class="wizard-big">
                         <section>
-                            <h2>Select the dataset:</h2>
+                            <h3>Select sampling settings:</h3>
 
                             <div class="row">
-                                <div class="col-lg-5">
-                                    <div class="form-group">
+                                <div class="col-lg-6">
 
-                                        <label>Undersampling: <i class="fa fa-question-circle parameter_value_off"
-                                                                 id="q1"></i></label>
+                                    <label>Undersampling: <i class="fa fa-question-circle parameter_value_off"
+                                                             id="q1"></i></label>
 
-                                        <div class="radio i-checks">
-                                            <label><input class="required" name="undersampling" type="radio" value="1">
-                                                True </label>
-                                            <br>
-                                            <label><input checked class="required" name="undersampling" type="radio"
-                                                          value="0"> False </label>
-                                        </div>
-
-                                        <div class="row text-center">
-                                            <label>Undersampling Rate = <span class="example-val parameter_value_off"
-                                                                              id="undersampling_rate-value"></span>
-                                                <span class="parameter_value_off"
-                                                      id="undersampling_rate-value2"> %</span>
-                                            </label>
-
-                                            <div class="col-lg-10 col-lg-offset-1">
-                                                <div id="undersampling_rate-slider"></div>
-                                                <input id="undersampling_rate" name="undersampling_rate" type="hidden"
-                                                       value="">
-                                            </div>
-                                        </div>
+                                    <div class="radio i-checks">
+                                        <label><input class="required" name="undersampling" type="radio" value="1">
+                                            True </label>
+                                        <br>
+                                        <label><input checked class="required" name="undersampling" type="radio"
+                                                      value="0"> False </label>
                                     </div>
 
+                                    <div class="row text-center">
+                                        <label>Undersampling Rate = <span class="example-val parameter_value_off"
+                                                                          id="undersampling_rate-value"></span>
+                                            <span class="parameter_value_off"
+                                                  id="undersampling_rate-value2"> %</span>
+                                        </label>
+
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="undersampling_rate-slider"></div>
+                                            <input id="undersampling_rate" name="undersampling_rate" type="hidden"
+                                                   value="">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6">
                                     <label>Oversampling (SMOTE): <i
                                                 class="fa fa-question-circle parameter_value_off"
                                                 id="q2"></i></label>
@@ -86,13 +84,23 @@
                                     </div>
 
                                 </div>
-                                <div class="col-lg-5 col-lg-offset-1">
-                                    Add dataset description here.
-                                </div>
                             </div>
                         </section>
-                        <input type="submit" value="Select" />
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-lg-4 col-lg-offset-5">
+                                <input class="btn btn-primary mt-2 mx-auto" type="submit" value="Select" />
+                            </div>
+                        </div>
                     </form>
+                </div>
+            </div>
+
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h2>Visualization</h2>
+                </div>
+                <div class="ibox-content">
+                    
                 </div>
             </div>
         </div>

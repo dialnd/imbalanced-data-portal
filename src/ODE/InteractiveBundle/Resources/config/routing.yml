@@ -1,27 +1,35 @@
 ode_interactive_homepage:
-    path:     /hello/{name}
+    path:     /interactive/{stage}
     defaults: { _controller: ODEInteractiveBundle:Default:index }
 
+ode_workflow_page:
+    path:     /interactive/stage/workflow
+    defaults: { _controller: ODEInteractiveBundle:Default:createWorkflow }
+
 ode_dataset_page:
-    path:     /select_dataset
+    path:     /interactive/stage/dataset
     defaults: { _controller: ODEInteractiveBundle:Default:createDataset }
 
 ode_sampling_page:
-    path:     /sampling
+    path:     /interactive/stage/sampling
     defaults: { _controller: ODEInteractiveBundle:Default:createSampling }
 
 ode_preprocessing_page:
-    path:     /preprocessing
-    defaults: { _controller: ODEInteractiveBundle:Default:createPreprocess }
+    path:     /interactive/stage/preprocessing
+    defaults: { _controller: ODEInteractiveBundle:Default:createPreprocessing }
 
 ode_reduction_page:
-    path:     /reduction
+    path:     /interactive/stage/reduction
     defaults: { _controller: ODEInteractiveBundle:Default:createReduction }
 
 ode_model_page:
-    path:     /select_model
+    path:     /interactive/stage/model
     defaults: { _controller: ODEInteractiveBundle:Default:createModel }
 
-ode_dataset_page:
-    path:     /model_analysis
+ode_parameterization_page:
+    path:     /interactive/stage/parameterization
+    defaults: { _controller: ODEInteractiveBundle:Default:createParameterization }
+
+ode_results_page:
+    path:     /interactive/stage/results
     defaults: { _controller: ODEInteractiveBundle:Default:createAnalysis }

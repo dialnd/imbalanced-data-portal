@@ -2,6 +2,10 @@ ode_ranking:
     resource: "@ODERankingBundle/Resources/config/routing.yml"
     prefix:   /
 
+ode_interactive:
+    resource: "@ODEInteractiveBundle/Resources/config/routing.yml"
+    prefix:   /
+
 ode_analysis:
     resource: "@ODEAnalysisBundle/Resources/config/routing.yml"
     prefix:   /
