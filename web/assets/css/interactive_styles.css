@@ -1,0 +1,12 @@
+#viz {
+    overflow: hidden;
+}
+
+.viz-image {
+    width: 40%;
+    height: auto;
+    float: left;
+    display: inline-block;
+    margin-left: 10%;
+    margin-right: 10%;
+}

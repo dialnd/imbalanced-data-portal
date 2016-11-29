@@ -10,6 +10,10 @@ ode_dataset_page:
     path:     /interactive/stage/dataset
     defaults: { _controller: ODEInteractiveBundle:Default:createDataset }
 
+ode_dataset_page:
+    path:     /interactive/submit/dataset
+    defaults: { _controller: ODEInteractiveBundle:Default:submitDataset }
+
 ode_sampling_page:
     path:     /interactive/stage/sampling
     defaults: { _controller: ODEInteractiveBundle:Default:createSampling }
@@ -17,6 +21,10 @@ ode_sampling_page:
 ode_preprocessing_page:
     path:     /interactive/stage/preprocessing
     defaults: { _controller: ODEInteractiveBundle:Default:createPreprocessing }
+
+ode_preprocessing_update:
+    path:     /interactive/update/preprocessing
+    defaults: { _controller: ODEInteractiveBundle:Default:updatePreprocessing }
 
 ode_reduction_page:
     path:     /interactive/stage/reduction

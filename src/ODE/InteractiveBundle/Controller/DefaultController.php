@@ -13,9 +13,9 @@ class DefaultController extends Controller
     private $stages = array(
         'workflow' => 0,
         'dataset' => 1,
-        'sampling' => 2,
-        'preprocessing' => 3,
-        'reduction' => 4,
+        'preprocessing' => 2,
+        'reduction' => 3,
+        'sampling' => 4,
         'model' => 5,
         'parameterization' => 6,
         'results' => 7
@@ -33,18 +33,15 @@ class DefaultController extends Controller
     );
 
     public function indexAction($stage, Request $request) {
-        $workflow = array(
-            'workflow' => 0,
-            'dataset' => 1,
-            'sampling' => 2,
-            'preprocessing' => 3,
-            'reduction' => 4,
-            'model_selection' => 5,
-            'parameterization' => 6,
-            'results' => 7
-        );
         $session = $this->get('session');
-        $session->set('workflow', $workflow);
+        $workflow = array();
+
+        if ($session->has('workflow')){
+            $workflow = $session->get('workflow', $workflow);
+        }
+        else {
+            return $this->redirect($this->generateUrl($this->templates['dataset']));
+        }
 
         $destination = $this->determineStage($stage);
         return $this->redirect($this->generateUrl($this->templates[$destination]));
@@ -89,6 +86,9 @@ class DefaultController extends Controller
         $session = $this->get('session');
         $dataset_id = $request->request('dataset_id');
 
+        $em = $this->getDoctrine()->getManager();
+        $datasets = $em->getRepository('ODEDatasetBundle:Dataset')->findBy([], ['name' => 'ASC']);
+
         $workflow = array();
         if ($session->has('workflow')) {
             $workflow = $session->get('workflow');
@@ -96,7 +96,9 @@ class DefaultController extends Controller
 
         $workflow['dataset'] = $dataset_id;
 
-        return $this->redirect($this->generateUrl('ode_wait_result', array('id' => $result->getId()),true));
+        $session->set("workflow", $workflow);
+
+        return $this->redirect('/interactive/preprocessing');
     }
 
     /**
@@ -110,7 +112,69 @@ class DefaultController extends Controller
      * Updates the visualization of under/oversampling.
      */
     public function updateSamplingAction(Request $request) {
+        $session = $this->get('session');
 
+        $workflow = array();
+
+        if ($session->has('workflow')) {
+            $workflow = $session->get('workflow');
+        }
+        else {
+            $error = array('msg' => 'Error: No active workflow.');
+            $response = new Response(json_encode($images));
+            $response->headers->set('Content-Type', 'application/json');
+            return $response;
+        }
+
+        $w_id = $workflow['id'];
+
+        $undersampling = ($request->request->get('undersampling') == '1' ? true : false);
+        $undersampling_rate = $request->request->get('undersampling_rate');
+        $oversampling = ($request->request->get('oversampling') == '1' ? true : false);
+        $oversampling_percentage = $request->request->get('oversampling_percentage');
+
+        $script = 'run_sampling.py';
+        $script_args = "--workflow $w_id";
+
+        if ($undersampling) {
+            $script_args .= " --undersample --undersample-rate $undersampling_rate"
+        }
+
+        if ($oversampling) {
+            $script_args .= " --oversample --oversample-rate $oversampling_percentage"
+        }
+
+        $this->runPython($script, $script_args);
+
+
+    }
+
+    public function submitSamplingAction(Request $request) {
+        $session = $this->get('session');
+        $workflow = array();
+
+        if ($session->has('workflow')) {
+            $workflow = $session->get('workflow');
+        }
+        else {
+            $this->redirect('/interactive/dataset');
+        }
+
+        $undersampling = ($request->request->get('undersampling') == '1' ? true : false);
+        $undersampling_rate = $request->request->get('undersampling_rate');
+        $oversampling = ($request->request->get('oversampling') == '1' ? true : false);
+        $oversampling_percentage = $request->request->get('oversampling_percentage');
+
+        $sampling = array();
+        $sampling['undersampling'] = $undersampling;
+        $sampling['undersampling_rate'] = $undersampling_rate;
+        $sampling['oversampling'] = $oversampling;
+        $sampling['oversampling_percentage'] = $oversampling_percentage;
+
+        $workflow['sampling'] = $subsampling_rate;
+        $session->set('workflow', $workflow);
+
+        return $this->redirect('/interactive/model');
     }
 
     /**
@@ -118,14 +182,65 @@ class DefaultController extends Controller
      */
     public function createPreprocessingAction(Request $request) {
         return $this->render('@ODEInteractive/Default/createPreprocessing.html.twig');
-
     }
 
     /**
      * Updates the visualization of preprocessing.
      */
     public function updatePreprocessingAction(Request $request) {
+        $session = $this->get("session");
+        $workflow = $session->get("workflow");
+        $dataset = $workflow["dataset"];
+        $w_id = $workflow["id"];
 
+        $missing_data = $request->request->get("missing_data");
+        $standardization = ($request->request->get("standardization") == '1' ? true : false);
+        $normalization = ($request->request->get("normalization") == '1' ? true : false);
+        $norm_method = $request->request->get("norm");
+        $binarization = ($request->request->get("binarization") == '1' ? true : false);
+        $b_thresh = $request->request->get("binarization_threshold");
+        $outliers = $request->request->get("outlier_detection");
+
+        $script_args = "--dataset $dataset --workflow $w_id --missing-data $missing_data";
+
+        if ($standardization) {
+            $script_args .= " --standardization";
+        }
+
+        if ($normalization) {
+            $script_args .= " --normalization --norm-method $norm_method";
+        }
+
+        if ($binarization) {
+            $script_args .= " --binarization --binarization-threshold $b_thresh";
+        }
+
+        $this->runPython("run_preprocessing.py", $script_args);
+
+        $response = new Response(json_encode($images));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    public function submitPreprocessingAction(Request $request) {
+        $session = $this->get("session");
+
+        if ($session->has('workflow')) {
+            $workflow = $session->get("workflow");
+        }
+
+        $settings = array();
+        $settings["missing_data"] = $request->request->get("missing_data");
+        $settings["standardization"] = ($request->request->get("standardization") == '1' ? true : false);
+        $settings["normalization"] = ($request->request->get("normalization") == '1' ? true : false);
+        $settings["norm_method"] = $request->request->get("norm");
+        $settings["binarization"] = $request->request->get("binarization");
+        $settings["binarization_threshold"] = $request->request->get("binarization_threshold");
+
+        $workflow["preprocessing"] = $preprocessing;
+        $session->set("workflow", $workflow);
+
+        return $this->redirect($this->generateUrl($this->templates["reduction"]));
     }
 
     /**
@@ -133,14 +248,63 @@ class DefaultController extends Controller
      */
     public function createReductionAction(Request $request) {
         return $this->render('@ODEInteractive/Default/createReduction.html.twig');
-
     }
 
     /**
      * Updates the visualization of dimensionality reduction.
      */
     public function updateReductionAction(Request $request) {
+        $session = $this->get('session');
+        $workflow = array();
 
+        if ($session->has('workflow')) {
+            $workflow = $session->get('workflow');
+
+            if (!array_key_exists('id', $workflow)) {
+                $this->redirect('/interactive/workflow');
+            }
+        }
+        else {
+            $this->redirect('/interactive/workflow');
+        }
+
+        $w_id = $workflow['id'];
+
+        $reduction = ($request->query->get('pca') == '1' ? true : false);
+        $n_components = $request->query->get('n_componenets');
+
+        $script = 'run_reduction.py';
+        $script_args = "--workflow $w_id";
+
+        if ($reduction) {
+            $script_args .= "--reduce --n-components $n_components";
+        }
+
+        $this->runPython($script, $script_args);
+
+
+    }
+
+    public function submitReductionAction(Request $request) {
+        $session = $this->get('session');
+        $workflow = array();
+        $stage = $this->determineStage('reduction');
+
+        if (!strcmp($stage, 'reduction')) {
+            $workflow = $session->get('workflow');
+        }
+        else {
+            return $this->redirect($this->generateUrl($this->templates[$destination]));
+        }
+
+        $reduction = array();
+        $reduction['pca'] = $request->request->get('pca');
+        $reduction['n_components'] = $request->request->get('n_components');
+
+        $workflow['reduction'] = $reduction;
+        $session->set('workflow', $workflow);
+
+        $this->redirect('/interactive/sampling');
     }
 
     /**
@@ -154,6 +318,25 @@ class DefaultController extends Controller
                                  'models' => $models
                              ));
 
+    }
+
+    public function submitModelAction(Request $request) {
+        $session = $this->get('session');
+        $workflow = array();
+        $stage = $this->determineStage('model');
+
+        if (!strcmp($stage, 'model')) {
+            $workflow = $session->get('workflow');
+        }
+        else {
+            return $this->redirect($this->generateUrl($this->templates[$destination]));
+        }
+
+        $workflow['model'] = $request->request->get('model');
+
+        $session->set('workflow', $workflow);
+
+        return $this->redirect('/interactive/parameterization');
     }
 
     /**
@@ -173,6 +356,10 @@ class DefaultController extends Controller
         else {
             return $this->redirect($this->generateUrl($this->templates['dataset']));
         }
+    }
+
+    public function updateParameterizationAction(Request $request) {
+
     }
 
     /**
@@ -226,6 +413,18 @@ class DefaultController extends Controller
         }
         else {
             return 'workflow';
+        }
+    }
+
+    private function runPython($script, $script_args) {
+        // Python script needs to know the "current_dir" to open data files
+        $script = __DIR__.'/../../../../web/assets/scripts/'.$script;
+        $current_dir = __DIR__.'/../../../../web/assets/scripts/';
+
+        if (substr(php_uname(), 0, 7) == "Windows"){
+            $terminal_output = pclose(popen('start /B python '.$script.' '.$script_args, "r"));
+        }  else {
+            $terminal_output = exec('python '.$script.' '.$script_args.' &');
         }
     }
 

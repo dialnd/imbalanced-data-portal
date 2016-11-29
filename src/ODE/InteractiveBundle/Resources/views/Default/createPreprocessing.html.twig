@@ -6,7 +6,8 @@
     'assets/css/plugins/iCheck/custom.css'
     'assets/css/plugins/steps/jquery.steps.css'
     'assets/css/plugins/noUiSlider/jquery.nouislider.css'
-    'assets/css/plugins/qTip/jquery.qtip.css' filter='cssrewrite' output='compiled/css/create-analysis.css' %}
+    'assets/css/plugins/qTip/jquery.qtip.css' filter='cssrewrite' output='compiled/css/create-analysis.css'
+    'assets/css/interactive_styles.css' %}
     <link href="{{ asset_url }}" rel="stylesheet" type="text/css" />
     {% endstylesheets %}
 {% endblock %}
@@ -23,7 +24,7 @@
                 </div>
                 <div class="ibox-content">
 
-                    <form id="form" action="/interactive/reduction" class="wizard-big">
+                    <form id="form" action="/interactive/submit/dataset" method="POST" class="wizard-big">
                         <h3>Clean the data:</h3>
                         <section>
                             <div class="row">
@@ -116,8 +117,11 @@
 
                         </section>
                         <div class="row" style="margin-top: 15px;">
-                            <div class="col-lg-4 col-lg-offset-5">
-                                <input class="btn btn-primary mt-2 mx-auto" type="submit" value="Select" />
+                            <div class="col-lg-4 col-lg-offset-3">
+                                <button class="btn btn-primary mt-2 mx-auto" id="update-btn">Update Plots</button>
+                            </div>
+                            <div class="col-lg-4">
+                                <input class="btn btn-primary mt-2 mx-auto" type="submit" value="Next" />
                             </div>
                         </div>
                     </form>
@@ -128,8 +132,11 @@
                 <div class="ibox-title">
                     <h2>Visualization</h2>
                 </div>
-                <div class="ibox-content">
-
+                <div class="ibox-content" id="viz">
+                    <img class="viz-image viz-image-first" src="/assets/workflows/test/preprocessing/boxplot_column_Petal_Length.png" />
+                    <img class="viz-image" src="/assets/workflows/test/preprocessing/boxplot_column_Petal_Width.png" />
+                    <img class="viz-image viz-image-first" src="/assets/workflows/test/preprocessing/boxplot_column_Sepal_Length.png" />
+                    <img class="viz-image" src="/assets/workflows/test/preprocessing/boxplot_column_Sepal_Width.png" />
                 </div>
             </div>
         </div>
@@ -167,5 +174,62 @@
     'assets/js/form_helpers.js' %}
     <script type="text/javascript" src="{{ asset_url }}"></script>
     {% endjavascripts %}
+
+    <script type="text/javascript">
+    $(function() {
+        $("#update-btn").on("click", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var $target, inputs, outputs;
+
+            $target = $(e.target);
+            $target.prop("disabled", true);
+
+            inputs["missing_data"] = $('input[name="missing_data"]:checked').val();
+            inputs["standardization"] = $('input[name="standardization"]:checked').val();
+            inputs["normalization"] = $('input[name="normalization"]:checked').val();
+            inputs["norm_method"] = $('input[name="norm"]:selected').val();
+            inputs["binarization"] = $('input[name="binarization"]:checked').val();
+            inputs["binarization_threshold"] = $('input[name="binarization_threshold"]').val();
+            inputs["outlier_detection"] = $('input[name="outlier_detection"]:checked').val();
+
+            $ajax({
+                url: "/interactive/update/preprocessing",
+                method: "POST",
+                data: JSON.stringify(input),
+                contentType: "application/json",
+                dataType: "application/json",
+                success: function(data) {
+                    outputs = JSON.parse(data);
+                },
+                error: function(e) {
+                    outputs = {errormsg: "An error occurred while processing the request "};
+                },
+                complete: function() {
+                    var $viz;
+                    $viz = $("#viz");
+
+                    for (var i in outputs) {
+                        if (outputs.hasOwnProperty(i)) {
+                            if (i === "message") {
+                                $viz.append(outputs[i]);
+                            }
+                            else {
+                                for (var j = 0; j < i.length; j++) {
+                                    $viz.append($('<img src="' + outputs[i][j] + '" class="viz-image" />'));
+                                }
+                            }
+                        }
+                    }
+
+                    $target.prop("disabled", false);
+                }
+            });
+
+            return false;
+        });
+    });
+    </script>
 
 {% endblock %}

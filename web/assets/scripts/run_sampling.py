@@ -14,12 +14,6 @@ from scipy import stats
 def parse_args(args=None):
     parser = argpase.ArgumentParser(description="Perform under- and oversampling on data.")
 
-    parser.add_argument("-i", "--dataset",
-                        help="name of the dataset",
-                        type=str,
-                        required=True
-                        )
-
     parser.add_argument("-w", "--workflow",
                         help="workflow id",
                         type=int,
@@ -32,23 +26,23 @@ def parse_args(args=None):
                         required=True
                         )
 
-    parser.add_argument("--undersample",
+    parser.add_argument("--undersampling",
                         help="pass to perform undersampling",
                         action="store_true"
                         )
 
-    parser.add_argument("--undersample-rate",
+    parser.add_argument("--undersampling-rate",
                         help="undersampling rate",
                         type=float,
                         default=1.0
                         )
 
-    parser.add_argument("--oversample",
+    parser.add_argument("--oversampling",
                         help="pass to perform oversampling",
                         action="store_true"
                         )
 
-    parser.add_argument("--oversample-rate",
+    parser.add_argument("--oversampling-percentage",
                         help="oversampling rate",
                         type=float,
                         default=1.0
@@ -146,13 +140,6 @@ if __name__ == "__main__":
 
     start = timeit.default_timer()
 
-    # Find the dataset to be used by the current analysis
-    dataset_path = os.path.join(args.current_dir,
-                                "..",
-                                "datasets",
-                                args.dataset + '.csv'
-                                )
-
     # Set up the path to the current workflow
     workflow_path = os.path.join(args.current_dir,
                                  "..",
@@ -161,10 +148,7 @@ if __name__ == "__main__":
                                  )
 
     # Load the dataset and split into features and labels
-    try:
-        df = pd.read_csv(dataset_path)
-    except IOError:
-        sys.exit(1)
+    df = pd.read_csv(os.path.join(workflow_path, "reduction", "data.csv"))
 
     y = preprocessing.LabelEncoder().fit_transform(df.ix[:,df.shape[1]-1].values)
     X = df.drop(df.columns[df.shape[1]-1], axis=1)
@@ -177,7 +161,7 @@ if __name__ == "__main__":
     for train_index, test_index in skf:
 
         # Perform undersampling
-        if args.undersample:
+        if args.undersampling:
             train_index = undersample(X,y,train_index,float(args.undersampling_rate)/100)
 
         X_train = X[train_index]
@@ -187,15 +171,15 @@ if __name__ == "__main__":
         y_test = y[test_index]
 
         # Perform oversampling
-        if args.oversample:
+        if args.oversampling:
             minority = X_train[np.where(y_train==1)]
-            smotted = SMOTE(minority, args.oversampling_rate, 5)
+            smotted = SMOTE(minority, args.oversampling_percentage, 5)
             X_train = np.vstack((X_train,smotted))
             y_train = np.append(y_train,np.ones(len(smotted),dtype=np.int32))
 
         # Save training and test sets for this fold in its own directory
         if os.path.isdir(workflow_path):
-            foldpath = os.path.join(workflow_path, str(i))
+            foldpath = os.path.join(workflow_path, "fold" + str(i))
             os.mkdir(foldpath)
             np.savetxt(os.path.join(foldpath, "train_feats.csv", delimiter=',')
             np.savetxt(os.path.join(foldpath, "train_labels.csv", delimiter=',')
