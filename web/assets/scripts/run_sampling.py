@@ -7,21 +7,21 @@ import random
 import argparse
 import os
 
-from sklearn import preprocessing, decomposition
+from sklearn import preprocessing, decomposition, cross_validation
 from sklearn.neighbors import NearestNeighbors
 from scipy import stats
 
 def parse_args(args=None):
-    parser = argpase.ArgumentParser(description="Perform under- and oversampling on data.")
+    parser = argparse.ArgumentParser(description="Perform under- and oversampling on data.")
 
     parser.add_argument("-w", "--workflow",
                         help="workflow id",
-                        type=int,
+                        type=str,
                         required=True
                         )
 
     parser.add_argument("-c", "--current-dir",
-                        help="the directory of this script"
+                        help="the directory of this script",
                         type=str,
                         required=True
                         )
@@ -111,7 +111,7 @@ def SMOTE(T, N, k, h = 1.0):
     if (N % 100) != 0:
         raise ValueError("N must be < 100 or multiple of 100")
 
-    N = N/100
+    N = int(N/100)
     n_synthetic_samples = N * n_minority_samples
     S = np.zeros(shape=(n_synthetic_samples, n_features))
 
@@ -120,9 +120,9 @@ def SMOTE(T, N, k, h = 1.0):
     neigh.fit(T)
 
     #Calculate synthetic samples
-    for i in xrange(n_minority_samples):
+    for i in range(n_minority_samples):
         nn = neigh.kneighbors(T[i], return_distance=False)
-        for n in xrange(N):
+        for n in range(N):
             nn_index = random.choice(nn[0])
             #NOTE: nn includes T[i], we don't want to select it
             while nn_index == i:
@@ -148,17 +148,25 @@ if __name__ == "__main__":
                                  )
 
     # Load the dataset and split into features and labels
-    df = pd.read_csv(os.path.join(workflow_path, "reduction", "data.csv"))
-
-    y = preprocessing.LabelEncoder().fit_transform(df.ix[:,df.shape[1]-1].values)
-    X = df.drop(df.columns[df.shape[1]-1], axis=1)
+    X = np.loadtxt(os.path.join(workflow_path, "reduction", "data.csv"))
+    y = np.loadtxt(os.path.join(workflow_path, "classes.csv")).astype(np.int32)
 
     # Set up cross-validation divisions
     skf = cross_validation.StratifiedKFold(y, n_folds=10)
     i = 0
 
     # Run under- and oversampling on each of the k folds
+
+    graph_data = []
+
     for train_index, test_index in skf:
+        train_index = train_index[np.where(train_index < len(X))]
+        test_index = test_index[np.where(test_index < len(X))]
+
+        fold_data = {
+            'boxplot': [],
+            'histogram': [],
+        }
 
         # Perform undersampling
         if args.undersampling:
@@ -179,11 +187,113 @@ if __name__ == "__main__":
 
         # Save training and test sets for this fold in its own directory
         if os.path.isdir(workflow_path):
-            foldpath = os.path.join(workflow_path, "fold" + str(i))
-            os.mkdir(foldpath)
-            np.savetxt(os.path.join(foldpath, "train_feats.csv", delimiter=',')
-            np.savetxt(os.path.join(foldpath, "train_labels.csv", delimiter=',')
-            np.savetxt(os.path.join(foldpath, "test_feats.csv", delimiter=',')
-            np.savetxt(os.path.join(foldpath, "test_labels.csv", delimiter=',')
+            foldpath = os.path.join(workflow_path, "fold{}".format(i))
+            if not os.path.isdir(foldpath):
+                os.mkdir(foldpath)
+            np.savetxt(os.path.join(foldpath, "train_feats.csv"), X_train, delimiter=',')
+            np.savetxt(os.path.join(foldpath, "train_labels.csv"), y_train, delimiter=',')
+            np.savetxt(os.path.join(foldpath, "test_feats.csv"), X_test, delimiter=',')
+            np.savetxt(os.path.join(foldpath, "test_labels.csv"), y_test, delimiter=',')
 
-    i += 1
+        for j in range(len(X_train[0])):
+            data = X_train[:, j]
+
+            boxplot = {}
+            histogram = {}
+            frequency = {}
+            odd = {}
+
+            boxplot = {
+                'chart': {
+                    'type': "boxplot"
+                },
+                'title': {
+                    'text': "Distribution of Feature {}".format(j)
+                },
+                'legend': {
+                    'enabled': False
+                },
+                'credits': {
+                    'enabled': False
+                },
+                'exporting': {
+                    'enabled': False
+                },
+                'yAxis': {
+                    'title': "Feature {}".format(j)
+                },
+                'series': [
+                    {
+                        'name': 'Observations',
+                        'data': [
+                            [np.min(data), np.percentile(data, 25), np.median(data), np.percentile(data, 75), np.max(data)]
+                        ]
+                    }
+                ]
+            }
+
+            bin_data, bin_edges = np.histogram(data, bins=20)
+            width = ((bin_edges[0] + bin_edges[1]) / 2) / 2
+            series = [[bin_edges[j] + width, float(bin_data[j])] for j in range(len(bin_data))]
+
+            histogram = {
+                'chart': {
+                    'type': 'column'
+                },
+                'title': {
+                    'text': "Distribution of Feature {}".format(j)
+                },
+                'legend': {
+                    'enabled': False
+                },
+                'credits': {
+                  'enabled': False
+                },
+                'exporting': {
+                  'enabled': False
+                },
+                'tooltip': {},
+                'xAxis': {
+                    'title': "Feature {}".format(j),
+                    'crosshair': True
+                },
+                'yAxis': {
+                    'min': 0,
+                    'title': "Count"
+                },
+                'plotOptions': {
+                    'column': {
+                        'pointPadding': 0,
+                        'borderWidth': 0,
+                        'groupPadding': 0,
+                        'shadow': False
+                    }
+                },
+                'series': [
+                    {
+                        'type': 'column',
+                        'name': "Distribution",
+                        'data': series
+                    }
+                ]
+            }
+
+            frequency = {
+
+            }
+
+            fold_data['boxplot'].append(boxplot)
+            fold_data['histogram'].append(histogram)
+
+        graph_data.append(fold_data)
+        i += 1
+
+    stop = timeit.default_timer()
+    graph_data["runtime"] = stop - start
+
+    outpath = os.path.join(workflow_path, 'sampling')
+    if not os.path.isdir(outpath):
+        os.mkdir(outpath)
+
+    with open(os.path.join(outpath, 'graph_data.json'), 'r') as f:
+        json_dump(graph_data, f)

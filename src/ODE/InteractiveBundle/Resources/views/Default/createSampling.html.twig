@@ -20,10 +20,20 @@
             <div class="ibox">
                 <div class="ibox-title">
                     <h2>Sampling</h2>
+                    <ul class="nav nav-pills">
+                        <li role="presentation"><a href="/interactive/workflow">Workflow</a></li>
+                        <li role="presentation"><a href="/interactive/dataset">Dataset</a></li>
+                        <li role="presentation"><a href="/interactive/preprocessing">Preprocessing</a></li>
+                        <li role="presentation"><a href="/interactive/reduction">Reduction</a></li>
+                        <li role="presentation" class="active"><a href="/interactive/sampling">Sampling</a></li>
+                        <li role="presentation"><a href="/interactive/model">Model</a></li>
+                        <li role="presentation"><a href="/interactive/parameterization">Parameterization</a></li>
+                        <li role="presentation"><a href="/interactive/result">Result</a></li>
+                    </ul>
                 </div>
                 <div class="ibox-content">
 
-                    <form id="form" action="/interactive/model" class="wizard-big">
+                    <form id="form" action="/interactive/submit/sampling" class="wizard-big">
                         <section>
                             <h3>Select sampling settings:</h3>
 
@@ -85,10 +95,17 @@
 
                                 </div>
                             </div>
+                            <div class="hr-line-dashed"></div>
                         </section>
                         <div class="row" style="margin-top: 15px;">
-                            <div class="col-lg-4 col-lg-offset-5">
-                                <input class="btn btn-primary mt-2 mx-auto" type="submit" value="Select" />
+                            <div class="col-lg-3 col-lg-offset-2">
+                                <a href="/interactive/model"><button class="btn btn-primary mt-2 mx-auto" id="prev-btn"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Reduction</button></a>
+                            </div>
+                            <div class="col-lg-3">
+                                <button class="btn btn-default mt-2 mx-auto" id="update-btn">Update Plots</button>
+                            </div>
+                            <div class="col-lg-3">
+                                <button type="submit" class="btn btn-primary mt-2 mx-auto">Save and Continue<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
                             </div>
                         </div>
                     </form>

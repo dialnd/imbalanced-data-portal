@@ -20,11 +20,21 @@
         <div class="col-lg-10 col-lg-offset-1">
             <div class="ibox">
                 <div class="ibox-title">
-                    <h2>Cleaning</h2>
+                    <h2>Preprocessing</h2>
+                    <ul class="nav nav-pills">
+                        <li role="presentation"><a href="/interactive/workflow">Workflow</a></li>
+                        <li role="presentation"><a href="/interactive/dataset">Dataset</a></li>
+                        <li role="presentation" class="active"><a href="/interactive/preprocessing">Preprocessing</a></li>
+                        <li role="presentation"><a href="/interactive/reduction">Reduction</a></li>
+                        <li role="presentation"><a href="/interactive/sampling">Sampling</a></li>
+                        <li role="presentation"><a href="/interactive/model">Model</a></li>
+                        <li role="presentation"><a href="/interactive/parameterization">Parameterization</a></li>
+                        <li role="presentation"><a href="/interactive/result">Result</a></li>
+                    </ul>
                 </div>
                 <div class="ibox-content">
 
-                    <form id="form" action="/interactive/submit/dataset" method="POST" class="wizard-big">
+                    <form id="form" action="/interactive/submit/preprocessing" method="POST" class="wizard-big">
                         <h3>Clean the data:</h3>
                         <section>
                             <div class="row">
@@ -58,6 +68,8 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="hr-line-dashed"></div>
 
                             <div class="row" style="margin-top: 15px;">
                                 <div class="col-lg-3 col-lg-offset-2">
@@ -114,14 +126,17 @@
                                     </div>
                                 </div>
                             </div>
-
+                            <div class="hr-line-dashed"></div>
                         </section>
                         <div class="row" style="margin-top: 15px;">
-                            <div class="col-lg-4 col-lg-offset-3">
-                                <button class="btn btn-primary mt-2 mx-auto" id="update-btn">Update Plots</button>
+                            <div class="col-lg-3 col-lg-offset-2">
+                                <a href="/interactive/dataset"><button class="btn btn-primary mt-2 mx-auto" id="prev-btn"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Dataset</button></a>
                             </div>
-                            <div class="col-lg-4">
-                                <input class="btn btn-primary mt-2 mx-auto" type="submit" value="Next" />
+                            <div class="col-lg-3">
+                                <button class="btn btn-default mt-2 mx-auto" id="update-btn">Update Plots</button>
+                            </div>
+                            <div class="col-lg-3">
+                                <button type="submit" class="btn btn-primary mt-2 mx-auto">Save and Continue<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
                             </div>
                         </div>
                     </form>
@@ -133,10 +148,22 @@
                     <h2>Visualization</h2>
                 </div>
                 <div class="ibox-content" id="viz">
-                    <img class="viz-image viz-image-first" src="/assets/workflows/test/preprocessing/boxplot_column_Petal_Length.png" />
-                    <img class="viz-image" src="/assets/workflows/test/preprocessing/boxplot_column_Petal_Width.png" />
-                    <img class="viz-image viz-image-first" src="/assets/workflows/test/preprocessing/boxplot_column_Sepal_Length.png" />
-                    <img class="viz-image" src="/assets/workflows/test/preprocessing/boxplot_column_Sepal_Width.png" />
+                    {% for i in 1..n_features %}
+                        <div class="viz-column col-lg-4">
+                            <div class="row">
+                                <div class="viz-col-boxplot"></div>
+                            </div>
+                            <div class="row">
+                                <div class="viz-col-histogram"></div>
+                            </div>
+                            <div class="row">
+                                <div class="viz-col-frequency"></div>
+                            </div>
+                            <div class="row">
+                                <div class="viz-col-odds"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -175,13 +202,24 @@
     <script type="text/javascript" src="{{ asset_url }}"></script>
     {% endjavascripts %}
 
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+
     <script type="text/javascript">
     $(function() {
+        var charts
+        charts = {
+            boxplot: [],
+            histogram: []
+        };
         $("#update-btn").on("click", function(e) {
             e.preventDefault();
             e.stopPropagation();
 
             var $target, inputs, outputs;
+            inputs = {};
+            outputs = {};
 
             $target = $(e.target);
             $target.prop("disabled", true);
@@ -194,35 +232,31 @@
             inputs["binarization_threshold"] = $('input[name="binarization_threshold"]').val();
             inputs["outlier_detection"] = $('input[name="outlier_detection"]:checked').val();
 
-            $ajax({
+            $.ajax({
                 url: "/interactive/update/preprocessing",
-                method: "POST",
-                data: JSON.stringify(input),
+                method: "GET",
+                data: inputs,
                 contentType: "application/json",
-                dataType: "application/json",
                 success: function(data) {
-                    outputs = JSON.parse(data);
+                    outputs = data;
+                    console.log(outputs);
+                    $('.viz-column').each(function(i, e) {
+                        var $boxplot, $histogram;
+                        $boxplot = $(e).find('.viz-col-boxplot')[0];
+                        $histogram = $(e).find('.viz-col-histogram')[0];
+
+                        outputs['boxplot'][i]['chart']['renderTo'] = $boxplot;
+                        outputs['histogram'][i]['chart']['renderTo'] = $histogram;
+                        box = Highcharts.chart(outputs['boxplot'][i]);
+                        hist = Highcharts.chart(outputs['histogram'][i]);
+                    });
                 },
-                error: function(e) {
+                error: function(xhr, status, error) {
                     outputs = {errormsg: "An error occurred while processing the request "};
+                    console.log(outputs);
+                    console.log(status, error);
                 },
                 complete: function() {
-                    var $viz;
-                    $viz = $("#viz");
-
-                    for (var i in outputs) {
-                        if (outputs.hasOwnProperty(i)) {
-                            if (i === "message") {
-                                $viz.append(outputs[i]);
-                            }
-                            else {
-                                for (var j = 0; j < i.length; j++) {
-                                    $viz.append($('<img src="' + outputs[i][j] + '" class="viz-image" />'));
-                                }
-                            }
-                        }
-                    }
-
                     $target.prop("disabled", false);
                 }
             });

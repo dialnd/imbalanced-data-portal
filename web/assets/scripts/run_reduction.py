@@ -24,7 +24,7 @@ def parse_args(args=None):
                         )
 
     parser.add_argument("-c", "--current-dir",
-                        help="the directory of this script"
+                        help="the directory of this script",
                         type=str,
                         required=True
                         )
@@ -46,30 +46,123 @@ def parse_args(args=None):
 if __name__ == "__main__":
     args = parse_args()
 
+    start = timeit.default_timer()
+
     workflow_path = os.path.join(args.current_dir, "..", "workflows", args.workflow)
 
     X = pd.read_csv(os.path.join(workflow_path, "preprocessing", "data.csv")).values
 
+    var_ratio = None
+
+    if not args.reduce or args.n_components > len(X[0]):
+        args.n_components = len(X[0])
+
     # Apply PCA
-    if args.reduce:
-        estimator = decomposition.PCA(n_components=args.n_components)
-        X = estimator.fit_transform(X)
+    estimator = decomposition.PCA(n_components=args.n_components)
+    X = estimator.fit_transform(X)
+    var_ratio = list(estimator.explained_variance_ratio_)
 
     out_path = os.path.join(workflow_path, "reduction")
-    if not os.path.isdir(out_path)
+    if not os.path.isdir(out_path):
         os.mkdir(out_path)
-    df.to_csv(os.path.join(os.path.join(out_path, "data.csv")))
+    np.savetxt(os.path.join(out_path, "data.csv"), X)
 
     graph_data = {
-        "boxplot": {},
-        "histogram": {},
-        "frequency": {},
-        "odds": {}
+        "scree": {},
+        "scatter": {}
     }
 
-    features = []
-    for i in range(0, n_features):
-        features.append("PC{}".format(i + 1))
+    scree = {
+        'chart': {
+            'type': 'column'
+        },
+        'title': {
+            'text': "Scree Plot of Principal Components"
+        },
+        'legend': {
+            'enabled': False
+        },
+        'credits': {
+          'enabled': False
+        },
+        'exporting': {
+          'enabled': False
+        },
+        'tooltip': {},
+        'xAxis': {
+            'title': "Principal Components",
+            'categories': ['Component {}'.format(i + 1) for i in range(len(var_ratio))]
+        },
+        'yAxis': {
+            'title': "Explained Variance (%)"
+        },
+        'plotOptions': {
+            'column': {
+                'pointPadding': 0.2,
+                'borderWidth': 0
+            }
+        },
+        'series': [{'name': 'PCA', 'data': var_ratio}]
+    }
 
-    boxplot = {}
-    for
+    scatterdata = [[i[0], i[1]] for i in X]
+    scatter = {
+        'chart': {
+            'type': 'scatter',
+            'zoomType': 'xy'
+        },
+        'title': {
+            'text': "Scatter Plot of First Two Principal Components"
+        },
+        'legend': {
+            'enabled': False
+        },
+        'credits': {
+          'enabled': False
+        },
+        'exporting': {
+          'enabled': False
+        },
+        'tooltip': {},
+        'xAxis': {
+            'title': "Component 1"
+        },
+        'yAxis': {
+            'title': "Component 2"
+        },
+        'plotOptions': {
+            'scatter': {
+                'marker': {
+                    'radius': 5,
+                    'states': {
+                        'hover': {
+                            'enabled': True,
+                            'lineColor': 'rgb(100,100,100)'
+                        }
+                    }
+                },
+                'states': {
+                    'hover': {
+                        'marker': {
+                            'enabled': False
+                        }
+                    }
+                }
+            }
+        },
+        'series': [
+            {
+                'name': "Components",
+                'data': scatterdata
+            }
+        ]
+    }
+
+    graph_data['scree'] = scree
+    graph_data['scatter'] = scatter
+
+    stop = timeit.default_timer()
+    graph_data["runtime"] = stop - start
+
+    with open(os.path.join(out_path, 'graph_data.json'), 'w') as f:
+        json.dump(graph_data, f)

@@ -93,13 +93,15 @@ def setup_workflow_dir(workflow_path, workflow_id):
 
 if __name__ == "__main__":
     args = parse_args()
-
-    dataset_path = os.path.join(args.current_dir, "..", "datasets")
-    workflow_path = os.path.join(args.current_dir, "..", "workflows")
+    args.current_dir = os.path.abspath(args.current_dir)
+    dataset_path = os.path.abspath(os.path.join(args.current_dir, "..", "datasets"))
+    workflow_path = os.path.abspath(os.path.join(args.current_dir, "..", "workflows"))
 
     setup_workflow_dir(workflow_path, args.workflow)
     workflow_path = os.path.join(workflow_path, args.workflow)
     out_path = os.path.join(workflow_path, "preprocessing")
+
+    start = timeit.default_timer()
 
     X = pd.read_csv(os.path.join(dataset_path, args.dataset))
 
@@ -114,10 +116,17 @@ if __name__ == "__main__":
         print("Invalid option for 'missing_data'")
         sys.exit(1)
 
+    y = np.array([i for i in X.values[:, -1]]).astype(np.int8)
+
+    np.savetxt(os.path.join(workflow_path, "classes.csv"), y, delimiter=',')
+    del y
+
     s = ' + '.join(X.columns) + ' -1'
-    cols = X.columns
+    cols = X.columns[:-1]
     # Note: The encoding below could create very large dataframes for datasets with many categorical features.
-    X = patsy.dmatrix(s, X, return_type='dataframe').values
+    #X = patsy.dmatrix(s, X, return_type='dataframe').values[:,:-1]
+    X = X.values[:, : -1].astype(np.float64)
+    outlier_idx = (np.abs(stats.zscore(X)) >= 3).all(axis=1)
 
 
     # Remove outliers
@@ -126,26 +135,13 @@ if __name__ == "__main__":
         non_outlier_idx = (np.abs(stats.zscore(X)) < 3).all(axis=1)
         X = X[non_outlier_idx]
 
-    print(X)
-
     # Perform standardization. TODO: Should this come before encoding?
     if args.standardization:
         X = preprocessing.scale(X)
 
-    print(X)
-
     # Perform normalization. TODO: Check to make sure order doesn't matter
     if args.normalization:
         X = preprocessing.normalize(X, norm=args.norm_method)
-
-    print(X)
-
-    for i in range(len(cols)):
-        col = cols[i]
-        plt.boxplot(X[i])
-        plt.title(col)
-        plt.savefig(os.path.join(out_path, "boxplot_column_{}.png".format(col)), format="png")
-        plt.clf()
 
     # Perform binarization. TODO: Check to make sure order doesn't matter
     if args.binarization:
@@ -158,11 +154,13 @@ if __name__ == "__main__":
     np.savetxt(os.path.join(out_path, "data.csv"), X, delimiter=',')
 
     graph_data = {
-        "boxplot": {},
-        "histogram": {},
-        "frequency": {},
-        "odds": {}
+        "boxplot": [],
+        "histogram": [],
+        "frequency": [],
+        "odds": []
     }
+
+    print(X)
 
     for i in range(len(cols)):
         boxplot = {}
@@ -173,47 +171,70 @@ if __name__ == "__main__":
         col = cols[i]
         data = X[:, i]
 
+        outliers = [[1, j] for j in data[outlier_idx]]
+
         boxplot = {
             'chart': {
                 'type': "boxplot"
             },
             'title': {
-                'text': "Distribution of ".format(col)
-            }
-            'x': col
-            'median' = np.median(data)
-            'low': np.min(data)
-            'high': np.max(data)
-            'q1': np.percentile(data, 25)
-            'q3': np.percentile(data, 75)
+                'text': "Distribution of {}".format(col)
+            },
+            'legend': {
+                'enabled': False
+            },
+            'credits': {
+                'enabled': False
+            },
+            'exporting': {
+                'enabled': False
+            },
+            'yAxis': {
+                'title': col
+            },
+            'series': [
+                {
+                    'name': 'Observations',
+                    'data': [
+                        [np.min(data), np.percentile(data, 25), np.median(data), np.percentile(data, 75), np.max(data)]
+                    ]
+                },
+                {
+                    'name': 'Outliers',
+                    'data': outliers,
+                    'type': 'scatter',
+                    'tooltip': {
+                        'pointFormat': 'Observation: {{point.y}}'
+                    }
+                }
+            ]
         }
 
-        bin_data, bin_edges = np.hist(data, bins=20)
+        bin_data, bin_edges = np.histogram(data, bins=20)
         width = ((bin_edges[0] + bin_edges[1]) / 2) / 2
-        series = [[bin_edges[j] + width, bin_data[j]}] for j in range(len(bin_data))]
-        outlier_idx = (np.abs(stats.zscore(data)) > 3)
+        series = [[bin_edges[j] + width, float(bin_data[j])] for j in range(len(bin_data))]
 
         histogram = {
             'chart': {
-                'type': 'column',
+                'type': 'column'
             },
-            'title': "Distribution of {}".format(col),
+            'title': {
+                'text': "Distribution of {}".format(col)
+            },
             'legend': {
                 'enabled': False
-            }
+            },
             'credits': {
               'enabled': False
             },
             'exporting': {
-              'enabled': false
+              'enabled': False
             },
             'tooltip': {},
             'xAxis': {
-                'min': bin_edges[0],
-                'max': bin_edges[-1],
                 'title': col,
-                'crosshair': true
-            }
+                'crosshair': True
+            },
             'yAxis': {
                 'min': 0,
                 'title': "Count"
@@ -223,17 +244,26 @@ if __name__ == "__main__":
                     'pointPadding': 0,
                     'borderWidth': 0,
                     'groupPadding': 0,
-                    'shadow': false
+                    'shadow': False
                 }
             },
             'series': [
                 {
+                    'type': 'column',
                     'name': "Distribution",
                     'data': series
-                },
-                {
-                    'name': 'Outliers',
-                    'data': data[outlier_idx]
                 }
             ]
         }
+
+        frequency = {
+
+        }
+
+        graph_data['boxplot'].append(boxplot)
+        graph_data['histogram'].append(histogram)
+
+    stop = timeit.default_timer()
+    graph_data["runtime"] = stop - start
+    with open(os.path.join(out_path, 'graph_data.json'), 'w') as f:
+        json.dump(graph_data, f)

@@ -20,40 +20,54 @@
             <div class="ibox">
                 <div class="ibox-title">
                     <h3>Dimensionality Reduction</h3>
+                    <ul class="nav nav-pills">
+                        <li role="presentation"><a href="/interactive/workflow">Workflow</a></li>
+                        <li role="presentation"><a href="/interactive/dataset">Dataset</a></li>
+                        <li role="presentation"><a href="/interactive/preprocessing">Preprocessing</a></li>
+                        <li role="presentation" class="active"><a href="/interactive/reduction">Reduction</a></li>
+                        <li role="presentation"><a href="/interactive/sampling">Sampling</a></li>
+                        <li role="presentation"><a href="/interactive/model">Model</a></li>
+                        <li role="presentation"><a href="/interactive/parameterization">Parameterization</a></li>
+                        <li role="presentation"><a href="/interactive/result">Result</a></li>
+                    </ul>
                 </div>
                 <div class="ibox-content">
 
-                    <form id="form" action="/interactive/sampling" class="wizard-big">
+                    <form id="form" action="/interactive/submit/reduction" class="wizard-big">
                         <section>
                             <h2>Select reduction parameters:</h2>
 
                             <div class="col-lg-4 col-lg-offset-4">
-                                <label>Principal Component Analysis: <i
-                                            class="fa fa-question-circle parameter_value_off"
-                                            id="q4"></i></label>
+                                <label>Principal Component Analysis: <i class="fa fa-question-circle parameter_value_off" id="q4"></i></label>
 
                                 <div class="radio i-checks">
-                                    <label><input class="required" name="pca" type="radio" value="1"> True
+                                    <label><input class="required" name="pca" type="radio" value="1" /> True
                                     </label>
                                     <br>
-                                    <label><input checked class="required" name="pca" type="radio" value="0">
+                                    <label><input checked class="required" name="pca" type="radio" value="0" />
                                         False </label>
                                 </div>
 
                                 <div class="row text-center">
-                                    <label>Number of Components = <span class="example-val parameter_value_off"
-                                                                        id="n_components-value"></span></label>
+                                    <label>Number of Components = <span class="example-val parameter_value_off" id="n_components-value"></span></label>
 
                                     <div class="col-lg-10 col-lg-offset-1">
                                         <div id="pca-slider"></div>
-                                        <input id="n_components" name="n_components" type="hidden" value="">
+                                        <input id="n_components" name="n_components" type="hidden" value="" />
                                     </div>
                                 </div>
                             </div>
                         </section>
-                        <div class="row">
-                            <div class="col-lg-4 col-lg-offset-5">
-                                <input class="btn btn-primary mx-auto" style="margin-top: 20px;" type="submit" value="Select" />
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="hr-line-dashed"></div>
+                            <div class="col-lg-3 col-lg-offset-2">
+                                <a href="/interactive/preprocessing"><button class="btn btn-primary mt-2 mx-auto" id="prev-btn"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Preprocessing</button></a>
+                            </div>
+                            <div class="col-lg-3">
+                                <button class="btn btn-default mt-2 mx-auto" id="update-btn">Update Plots</button>
+                            </div>
+                            <div class="col-lg-3">
+                                <button type="submit" class="btn btn-primary mt-2 mx-auto">Save and Continue<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
                             </div>
                         </div>
                     </form>
@@ -65,7 +79,14 @@
                     <h2>Visualization</h2>
                 </div>
                 <div class="ibox-content">
-
+                    <div class="viz-column col-lg-12">
+                        <div class="row">
+                            <div class="viz-col-scree"></div>
+                        </div>
+                        <div class="row">
+                            <div class="viz-col-scatter"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -103,5 +124,61 @@
     'assets/js/form_helpers.js' %}
     <script type="text/javascript" src="{{ asset_url }}"></script>
     {% endjavascripts %}
+
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+    <script type="text/javascript">
+    $(function() {
+
+        $("#update-btn").on("click", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var $target, inputs, outputs;
+            inputs = {};
+            outputs = {};
+
+            $target = $(e.target);
+            $target.prop("disabled", true);
+
+            inputs["pca"] = $('input[name="pca"]:checked').val();
+            inputs["n_components"] = $("#n_components").val();
+
+            $.ajax({
+                url: "/interactive/update/reduction",
+                method: "GET",
+                data: inputs,
+                contentType: "application/json",
+                success: function(data) {
+                    outputs = data;
+                    console.log(outputs);
+                    $('.viz-column').each(function(i, e) {
+                        var $scree, $scatter;
+                        $scree = $('.viz-col-scree')[0];
+                        $scatter = $('.viz-col-scatter')[0];
+
+                        outputs['scree']['chart']['renderTo'] = $scree;
+                        outputs['scatter']['chart']['renderTo'] = $scatter;
+
+                        Highcharts.chart(outputs['scree']);
+                        Highcharts.chart(outputs['scatter']);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    outputs = {errormsg: "An error occurred while processing the request "};
+                    console.log(outputs);
+                    console.log(status, error);
+                },
+                complete: function() {
+                    $target.prop("disabled", false);
+                }
+            });
+
+            return false;
+        });
+    });
+    </script>
 
 {% endblock %}
