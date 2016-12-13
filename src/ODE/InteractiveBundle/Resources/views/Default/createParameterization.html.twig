@@ -1,0 +1,2066 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets
+    'assets/css/plugins/iCheck/custom.css'
+    'assets/css/plugins/steps/jquery.steps.css'
+    'assets/css/plugins/noUiSlider/jquery.nouislider.css'
+    'assets/css/plugins/dataTables/dataTables.bootstrap.css'
+    'assets/css/plugins/dataTables/dataTables.tableTools.css'
+    'assets/css/plugins/dataTables/dataTables.responsive.css'
+    'assets/css/plugins/qTip/jquery.qtip.css'
+    'assets/css/interactive_styles.css'
+    filter='cssrewrite' output='compiled/css/report.css' %}
+    <link href="{{ asset_url }}" rel="stylesheet" type="text/css" />
+    {% endstylesheets %}
+{% endblock %}
+
+{% block body %}
+
+{% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+    <br><br>
+    <div class="row">
+        <div class="col-lg-10 col-lg-offset-1">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h2>Model Parameters</h2>
+                    <ul class="nav nav-pills">
+                        <li role="presentation"><a href="/interactive/workflow">Workflow</a></li>
+                        <li role="presentation"><a href="/interactive/dataset">Dataset</a></li>
+                        <li role="presentation"><a href="/interactive/preprocessing">Preprocessing</a></li>
+                        <li role="presentation"><a href="/interactive/reduction">Reduction</a></li>
+                        <li role="presentation"><a href="/interactive/sampling">Sampling</a></li>
+                        <li role="presentation"><a href="/interactive/model">Model</a></li>
+                        <li role="presentation" class="active"><a href="/interactive/parameterization">Parameterization</a></li>
+                        <li role="presentation"><a href="/interactive/result">Result</a></li>
+                    </ul>
+                </div>
+                <div class="ibox-content">
+
+                    <form id="form" method="POST" action="/interactive/submit/parameterization" class="wizard-big">
+                        <section>
+
+                            {% if model.getName == 'Decision Tree' %}
+                                <div class="row">
+                                    <div class="col-lg-2">
+                                        <label>Criterion: <i class="fa fa-question-circle" style="color:#676a6c" id="q9"></i></label>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="gini" name="criterion" checked="" class="required"> Gini</label>
+                                        </div>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="entropy" name="criterion" class="required"> Entropy</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <label>Splitter: <i class="fa fa-question-circle" style="color:#676a6c" id="q10"></i></label>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="best" name="splitter" checked="" class="required"> Best</label>
+                                        </div>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="random" name="splitter" class="required"> Random</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 text-center">
+                                        <label>max_leaf_nodes = <span class="example-val" style="color:#1AB394" id="max_leaf_nodes-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q11"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="max_leaf_nodes-slider"></div>
+                                            <input type="hidden" name="max_leaf_nodes" id="max_leaf_nodes" value="">
+                                            <br/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 text-center">
+                                        <label>min_samples_leaf = <span class="example-val" style="color:#1AB394" id="min_samples_leaf-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q12"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="min_samples_leaf-slider"></div>
+                                            <input type="hidden" name="min_samples_leaf" id="min_samples_leaf" value="">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="hr-line-dashed"></div>
+                                <div class="row">
+                                    <div class="col-lg-4 text-center">
+                                        <label>max_features = <span class="example-val" style="color:#1AB394" id="max_features-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q13"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="max_features-slider"></div>
+                                            <input type="hidden" name="max_features" id="max_features" value="">
+                                            <br/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 text-center">
+                                        <label>min_samples_split = <span class="example-val" style="color:#1AB394" id="min_samples_split-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q14"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="min_samples_split-slider"></div>
+                                            <input type="hidden" name="min_samples_split" id="min_samples_split" value="">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 text-center" style="display:inline-block; vertical-align: middle; float: none; margin-right:-4px;">
+                                        <label>max_depth = <span class="example-val" style="color:#1AB394" id="max_depth-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q15"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="max_depth-slider"></div>
+                                            <input type="hidden" name="max_depth" id="max_depth" value="">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="hr-line-dashed"></div>
+
+                            {% elseif model.getName == 'Gaussian Naive Bayes' %}
+
+                                <h4><b>There are no configurable parameters for Gaussian Naive Bayes.</b></h4>
+
+                            {% elseif model.getName == 'K-Nearest Neighbors' %}
+
+                                <div class="row">
+                                    <div class="col-lg-2">
+                                        <label>Algorithm: <i class="fa fa-question-circle" id="q9" style=
+                                                "color:#676a6c"></i></label>
+
+                                        <div class="radio i-checks">
+                                            <label><input checked class="required" name="algorithm" type=
+                                                    "radio" value="auto"> Auto</label>
+                                        </div>
+
+                                        <div class="radio i-checks">
+                                            <label><input class="required" name="algorithm" type="radio"
+                                                          value="ball_tree"> ball_tree</label>
+                                        </div>
+
+                                        <div class="radio i-checks">
+                                            <label><input class="required" name="algorithm" type="radio"
+                                                          value="kd_tree"> kd_tree</label>
+                                        </div>
+
+                                        <div class="radio i-checks">
+                                            <label><input class="required" name="algorithm" type="radio"
+                                                          value="brute"> Brute-force</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-2">
+                                        <label>Weights: <i class="fa fa-question-circle" id="q10" style=
+                                                "color:#676a6c"></i></label>
+
+                                        <div class="radio i-checks">
+                                            <label><input checked class="required" name="weights" type=
+                                                    "radio" value="uniform"> Uniform</label>
+                                        </div>
+
+                                        <div class="radio i-checks">
+                                            <label><input class="required" name="weights" type="radio"
+                                                          value="distance"> Distance</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 text-center">
+                                        <div class="row text-center">
+                                            <label>n_neighbors = <span class="example-val" id=
+                                                    "n_neighbors-value" style="color:#1AB394"></span> <i class=
+                                                                                                                 "fa fa-question-circle" id="q11" style=
+                                                                                                                 "color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="n_neighbors-slider"></div><input id="n_neighbors"
+                                                                                          name="n_neighbors" type="hidden" value="">
+                                            </div>
+                                        </div><br>
+                                        <label>metric: <i class="fa fa-question-circle" id="q12" style=
+                                                "color:#676a6c"></i></label> <select class="form-control required"
+                                                                                     id="metric" name="metric">
+                                        <option value="minkowski">
+                                            Minkowski Distance
+                                        </option>
+
+                                        <option value="euclidean">
+                                            Euclidean Distance
+                                        </option>
+
+                                        <option value="manhattan">
+                                            Manhattan Distance
+                                        </option>
+
+                                        <option value="chebyshev">
+                                            Chebyshev Distance
+                                        </option>
+                                    </select>
+                                    </div>
+
+                                    <div class="col-lg-4 text-center">
+                                        <div class="row text-center">
+                                            <label>leaf_size = <span class="example-val" id=
+                                                    "leaf_size-value" style="color:#1AB394"></span> <i class=
+                                                                                                               "fa fa-question-circle" id="q13" style=
+                                                                                                               "color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="leaf_size-slider"></div><input id="leaf_size"
+                                                                                        name="leaf_size" type="hidden" value="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            {% elseif model.getName == 'Logistic Regression' %}
+
+                                <div class="row">
+                                    <div class="col-lg-2">
+                                        <label>Penalty: <i class="fa fa-question-circle" id="q9" style=
+                                                "color:#676a6c"></i></label>
+
+                                        <div class="radio i-checks">
+                                            <label><input checked class="required" name="penalty" type=
+                                                    "radio" value="l1"> L1</label>
+                                        </div>
+
+                                        <div class="radio i-checks">
+                                            <label><input class="required" name="penalty" type="radio"
+                                                          value="l2"> L2</label>
+                                        </div>
+                                	    <br>
+                                	    <label>fit_intercept: <i class="fa fa-question-circle" id="q10" style=
+                                                "color:#676a6c"></i></label>
+
+                                        <div class="radio i-checks">
+                                            <label><input checked class="required" name="fit_intercept" type=
+                                                    "radio" value="1"> True</label>
+                                        </div>
+
+                                        <div class="radio i-checks">
+                                            <label><input class="required" name="fit_intercept" type="radio"
+                                                          value="0"> False</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-2">
+                                        <label>Solver: <i class="fa fa-question-circle" id="q11" style=
+                                        "color:#676a6c"></i></label>
+
+                                        <div class="radio i-checks">
+                                            <label><input checked class="required" name="solver" type="radio"
+                                            value="newton-cg"> newton-cg</label>
+                                        </div>
+
+
+                                        <div class="radio i-checks">
+                                            <label><input class="required" name="solver" type="radio" value=
+                                            "lbfgs"> lbfgs</label>
+                                        </div>
+
+
+                                        <div class="radio i-checks">
+                                            <label><input class="required" name="solver" type="radio" value=
+                                            "liblinear"> liblinear</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 text-center">
+                                        <div class="row text-center">
+                                            <label>C = <span class="example-val" id="C-value" style=
+                                            "color:#1AB394"></span> <i class="fa fa-question-circle" id="q12"
+                                            style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="C-slider">
+                                                </div>
+                                                <input id="C" name="C" type="hidden" value="">
+                                            </div>
+                                        </div>
+                                        <br>
+
+
+                                        <div class="row text-center">
+                                            <label>intercept_scaling = <span class="example-val" id=
+                                            "intercept_scaling-value" style="color:#1AB394"></span> <i class=
+                                            "fa fa-question-circle" id="q13" style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="intercept_scaling-slider">
+                                                </div>
+                                                <input id="intercept_scaling" name="intercept_scaling" type=
+                                                "hidden" value="">
+                                            </div>
+                                        </div>
+                                        <br>
+
+                                         <div class="row text-center">
+                                            <label>max_iter = <span class="example-val" id=
+                                            "max_iter-value" style="color:#1AB394"></span> <i class=
+                                            "fa fa-question-circle" id="q14" style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="max_iter-slider">
+                                                </div>
+                                                <input id="max_iter" name="max_iter" type=
+                                                "hidden" value="">
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                    <div class="col-lg-4 text-center">
+                                        <div class="row text-center">
+                                            <label>random_state = <span class="example-val" id="random_state-value"
+                                            style="color:#1AB394"></span> <i class="fa fa-question-circle" id=
+                                            "q15" style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="random_state-slider">
+                                                </div>
+                                                <input id="random_state" name="random_state" type="hidden" value="">
+                                            </div>
+                                        </div>
+                                        <br>
+
+                                        <div class="row text-center">
+                                            <label>tol = <span class="example-val" id="tol-value"
+                                            style="color:#1AB394"></span> <i class="fa fa-question-circle" id=
+                                            "q16" style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="tol-slider">
+                                                </div>
+                                                <input id="tol" name="tol" type="hidden" value="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            {% elseif model.getName == 'Support Vector Machine' %}
+
+                                <input name="probability" type="hidden" value="1">
+                                <div class="row">
+                                    <div class="col-lg-2">
+                                        <label>Kernel: <i class="fa fa-question-circle" id="q9" style=
+                                        "color:#676a6c"></i></label> <select class="form-control required"
+                                        id="kernel" name="kernel">
+                                            <option value="linear">
+                                                Linear
+                                            </option>
+
+                                            <option value="poly">
+                                                Poly
+                                            </option>
+
+                                            <option value="rbf">
+                                                Rbf
+                                            </option>
+
+                                            <option value="sigmoid">
+                                                Sigmoid
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-lg-2">
+                                        <label>Shrinking: <i class="fa fa-question-circle" id="q10" style=
+                                        "color:#676a6c"></i></label>
+
+                                        <div class="radio i-checks">
+                                            <label><input checked class="required" name="shrinking" type=
+                                            "radio" value="1"> True</label>
+                                        </div>
+
+                                        <div class="radio i-checks">
+                                            <label><input class="required" name="shrinking" type="radio"
+                                            value="0"> False</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 text-center">
+                                        <div class="row text-center">
+                                            <label>C = <span class="example-val" id="C-value" style=
+                                            "color:#1AB394"></span> <i class="fa fa-question-circle" id=
+                                            "q11" style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="C-slider"></div><input id="C" name="C" type=
+                                                "hidden" value="">
+                                            </div>
+                                        </div><br>
+
+                                        <div class="row text-center">
+                                            <label>max_iter = <span class="example-val" id="max_iter-value"
+                                            style="color:#1AB394"></span> <i class="fa fa-question-circle"
+                                            id="q12" style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="max_iter-slider"></div><input id="max_iter" name=
+                                                "max_iter" type="hidden" value="">
+                                            </div>
+                                        </div><br>
+
+                                        <div class="row text-center">
+                                            <label>random_state = <span class="example-val" id=
+                                            "random_state-value" style="color:#1AB394"></span> <i class=
+                                            "fa fa-question-circle" id="q13" style=
+                                            "color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="random_state-slider"></div><input id=
+                                                "random_state" name="random_state" type="hidden" value="">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 text-center">
+                                        <div class="row text-center">
+                                            <label>degree = <span class="parameter_value" id=
+                                            "degree-value"></span> <i class="fa fa-question-circle" id=
+                                            "q14" style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="degree-slider"></div><input id="degree" name=
+                                                "degree" type="hidden" value="">
+                                            </div>
+                                        </div><br>
+
+                                        <div class="row text-center">
+                                            <label>gamma = <span class="parameter_value_off" id=
+                                            "gamma-value"></span> <i class="fa fa-question-circle" id="q15"
+                                            style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="gamma-slider"></div><input id="gamma" name="gamma"
+                                                type="hidden" value="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            {% elseif model.getName == 'Stochastic Gradient Descent' %}
+
+                                <div class="row">
+                                    <div class="col-lg-2">
+                                        <label>Loss function: <i class="fa fa-question-circle" id="q9" style=
+                                        "color:#676a6c"></i></label> <select class="form-control required"
+                                        id="loss" name="loss">
+                                            <option value="log">
+                                                log
+                                            </option>
+                                            <option value="modified_huber">
+                                                modified_huber
+                                            </option>
+                                        </select>
+                                        <br>
+                                        <label>Penalty: <i class="fa fa-question-circle" id="q10" style=
+                                        "color:#676a6c"></i></label> <select class="form-control required"
+                                        id="penalty" name="penalty">
+                                            <option value="l2">
+                                                L2
+                                            </option>
+                                            <option value="none">
+                                                none
+                                            </option>
+                                            <option value="l1">
+                                                L1
+                                            </option>
+                                            <option value="elasticnet">
+                                                elasticnet
+                                            </option>
+                                        </select>
+                                        <br>
+                                        <label>Learning rate: <i class="fa fa-question-circle" id="q11" style=
+                                        "color:#676a6c"></i></label> <select class="form-control required"
+                                        id="learning_rate" name="learning_rate">
+                                            <option value="constant">
+                                                constant
+                                            </option>
+                                            <option value="invscaling">
+                                                invscaling
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-lg-2">
+                                        <label>Fit intercept: <i class="fa fa-question-circle" id="q12" style=
+                                        "color:#676a6c"></i></label> <select class="form-control required"
+                                        id="fit_intercept" name="fit_intercept">
+                                            <option value="1">
+                                                True
+                                            </option>
+                                            <option value="0">
+                                                False
+                                            </option>
+                                        </select>
+                                        <br>
+                                        <label>Warm start: <i class="fa fa-question-circle" id="q13" style=
+                                        "color:#676a6c"></i></label> <select class="form-control required"
+                                        id="warm_start" name="warm_start">
+                                            <option value="1">
+                                                True
+                                            </option>
+                                            <option value="0">
+                                                False
+                                            </option>
+                                        </select>
+                                        <br>
+                                        <label>Shuffle: <i class="fa fa-question-circle" id="q14" style=
+                                        "color:#676a6c"></i></label> <select class="form-control required"
+                                        id="shuffle" name="shuffle">
+                                            <option value="1">
+                                                True
+                                            </option>
+                                            <option value="0">
+                                                False
+                                            </option>
+                                        </select>
+                                        <label>Average: <i class="fa fa-question-circle" id="q15" style=
+                                        "color:#676a6c"></i></label> <select class="form-control required"
+                                        id="average" name="average">
+                                            <option value="1">
+                                                True
+                                            </option>
+                                            <option value="0">
+                                                False
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-lg-4 text-center">
+                                        <div class="row text-center">
+                                            <span><label>Alpha = <span id="alpha-value" style=
+                                            "color:#1AB394"></span> <i class="fa fa-question-circle" id=
+                                            "q16" style="color:#676a6c"></i>
+                                             <input type="number" min="-1" max="1" step="0.0001" id="input-alpha"></label></span>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="alpha-slider"></div><input id="alpha" name="alpha" type=
+                                                "hidden" value="">
+                                            </div>
+                                        </div><br>
+
+                                        <div class="row text-center">
+                                            <label>n_iter = <span class="example-val" id="n_iter-value"
+                                            style="color:#1AB394"></span> <i class="fa fa-question-circle"
+                                            id="q17" style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="n_iter-slider"></div><input id="n_iter" name=
+                                                "n_iter" type="hidden" value="">
+                                            </div>
+                                        </div><br>
+
+                                        <div class="row text-center">
+                                            <label>random_state = <span class="example-val" id=
+                                            "random_state-value" style="color:#1AB394"></span> <i class=
+                                            "fa fa-question-circle" id="q18" style=
+                                            "color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="random_state-slider"></div><input id=
+                                                "random_state" name="random_state" type="hidden" value="">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 text-center">
+                                        <div class="row text-center">
+                                            <label>l1_ratio = <span class="parameter_value" id=
+                                            "l1_ratio-value"></span> <i class="fa fa-question-circle" id=
+                                            "q19" style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="l1_ratio-slider"></div><input id="l1_ratio" name=
+                                                "l1_ratio" type="hidden" value="">
+                                            </div>
+                                        </div><br>
+
+                                        <div class="row text-center">
+                                            <label>epsilon = <span class="parameter_value_off" id=
+                                            "epsilon-value"></span> <i class="fa fa-question-circle" id="q20"
+                                            style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="epsilon-slider"></div><input id="epsilon" name="epsilon"
+                                                type="hidden" value="">
+                                            </div>
+                                        </div><br>
+
+                                        <div class="row text-center">
+                                            <label>eta0 = <span class="parameter_value_off" id=
+                                            "eta0-value"></span> <i class="fa fa-question-circle" id="q21"
+                                            style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="eta0-slider"></div><input id="eta0" name="eta0"
+                                                type="hidden" value="">
+                                            </div>
+                                        </div><br>
+
+                                        <div class="row text-center">
+                                            <label>power_t = <span class="parameter_value_off" id=
+                                            "power_t-value"></span> <i class="fa fa-question-circle" id="q22"
+                                            style="color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="power_t-slider"></div><input id="power_t" name="power_t"
+                                                type="hidden" value="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            {% elseif model.getName == 'Random Forest' or model.getName == 'Extremely Randomized Trees' %}
+
+                                <div class="row">
+                                    <div class="col-lg-2">
+                                        <label>Criterion: <i class="fa fa-question-circle" style="color:#676a6c" id="q9"></i></label>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="gini" name="criterion" checked="" class="required"> Gini</label>
+                                        </div>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="entropy" name="criterion" class="required"> Entropy</label>
+                                        </div>
+                                        <br>
+
+                                        <label>Boostrap: <i class="fa fa-question-circle" style="color:#676a6c" id="q10"></i></label>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="1" name="bootstrap" checked="" class="required"> True</label>
+                                        </div>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="0" name="bootstrap" class="required"> False</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-2">
+                                        <label>Out-of-bag score: <i class="fa fa-question-circle" style="color:#676a6c" id="q11"></i></label>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="1" name="oob_score" checked="" class="required"> True</label>
+                                        </div>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="0" name="oob_score" class="required"> False</label>
+                                        </div>
+                                        <br>
+
+                                        <label>Warm start: <i class="fa fa-question-circle" style="color:#676a6c" id="q12"></i></label>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="1" name="warm_start" checked="" class="required"> True</label>
+                                        </div>
+                                        <div class="radio i-checks">
+                                            <label>
+                                                <input type="radio" value="0" name="warm_start" class="required"> False</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 text-center">
+                                        <div class="row text-center">
+                                            <label>max_leaf_nodes = <span class="example-val" style="color:#1AB394" id="max_leaf_nodes-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q13"></i></label>
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="max_leaf_nodes-slider"></div>
+                                                <input type="hidden" name="max_leaf_nodes" id="max_leaf_nodes" value="">
+                                            </div>
+                                        </div>
+                                        <br>
+
+                                        <div class="row text-center">
+                                            <label>min_samples_leaf = <span class="example-val" style="color:#1AB394" id="min_samples_leaf-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q14"></i></label>
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="min_samples_leaf-slider"></div>
+                                                <input type="hidden" name="min_samples_leaf" id="min_samples_leaf" value="">
+                                            </div>
+                                        </div>
+                                        <br>
+
+                                        <div class="row text-center">
+                                            <label>max_features = <span class="example-val" style="color:#1AB394" id="max_features-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q15"></i></label>
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="max_features-slider"></div>
+                                                <input type="hidden" name="max_features" id="max_features" value="">
+                                            </div>
+                                        </div>
+                                        <br>
+
+                                        <div class="row text-center">
+                                            <label>num_estimators = <span class="example-val" style="color:#1AB394" id="n_estimators-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q16"></i></label>
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="n_estimators-slider"></div>
+                                                <input type="hidden" name="n_estimators" id="n_estimators" value="">
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+
+                                    <div class="col-lg-4 text-center">
+                                       <div class="row text-center">
+                                           <label>min_samples_split = <span class="example-val" style="color:#1AB394" id="min_samples_split-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q17"></i></label>
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="min_samples_split-slider"></div>
+                                                <input type="hidden" name="min_samples_split" id="min_samples_split" value="">
+                                            </div>
+                                        </div>
+                                        <br>
+
+                                        <div class="row text-center">
+                                            <label>max_depth = <span class="example-val" style="color:#1AB394" id="max_depth-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q18"></i></label>
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="max_depth-slider"></div>
+                                                <input type="hidden" name="max_depth" id="max_depth" value="">
+                                            </div>
+                                        </div>
+                                        <br>
+
+                                        <div class="row text-center">
+                                            <label>random_state = <span class="example-val" id=
+                                            "random_state-value" style="color:#1AB394"></span> <i class=
+                                            "fa fa-question-circle" id="q19" style=
+                                            "color:#676a6c"></i></label>
+
+                                            <div class="col-lg-10 col-lg-offset-1">
+                                                <div id="random_state-slider"></div><input id=
+                                                "random_state" name="random_state" type="hidden" value="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            {% elseif model.getName == 'Gradient Boosting' %}
+
+                            <div class="row">
+                                <div class="col-lg-3">
+                                    <label>Warm start: <i class="fa fa-question-circle" style="color:#676a6c" id="q9"></i></label>
+                                    <div class="radio i-checks">
+                                        <label>
+                                            <input type="radio" value="1" name="warm_start" checked="" class="required"> True</label>
+                                    </div>
+                                    <div class="radio i-checks">
+                                        <label>
+                                            <input type="radio" value="0" name="warm_start" class="required"> False</label>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-3 text-center">
+                                    <div class="row text-center">
+                                        <label>max_leaf_nodes = <span class="example-val" style="color:#1AB394" id="max_leaf_nodes-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q10"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="max_leaf_nodes-slider"></div>
+                                            <input type="hidden" name="max_leaf_nodes" id="max_leaf_nodes" value="">
+                                        </div>
+                                    </div>
+                                    <br>
+
+                                    <div class="row text-center">
+                                        <label>min_samples_leaf = <span class="example-val" style="color:#1AB394" id="min_samples_leaf-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q11"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="min_samples_leaf-slider"></div>
+                                            <input type="hidden" name="min_samples_leaf" id="min_samples_leaf" value="">
+                                        </div>
+                                    </div>
+                                    <br>
+
+                                    <div class="row text-center">
+                                        <label>max_features = <span class="example-val" style="color:#1AB394" id="max_features-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q12"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="max_features-slider"></div>
+                                            <input type="hidden" name="max_features" id="max_features" value="">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-3 text-center">
+                                    <div class="row text-center">
+                                        <label>num_estimators = <span class="example-val" style="color:#1AB394" id="n_estimators-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q13"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="n_estimators-slider"></div>
+                                            <input type="hidden" name="n_estimators" id="n_estimators" value="">
+                                        </div>
+                                    </div>
+                                    <br>
+
+                                     <div class="row text-center">
+                                       <label>min_samples_split = <span class="example-val" style="color:#1AB394" id="min_samples_split-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q14"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="min_samples_split-slider"></div>
+                                            <input type="hidden" name="min_samples_split" id="min_samples_split" value="">
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <div class="col-lg-3 text-center">
+                                    <div class="row text-center">
+                                        <label>max_depth = <span class="example-val" style="color:#1AB394" id="max_depth-value"></span>  <i class="fa fa-question-circle" style="color:#676a6c" id="q15"></i></label>
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="max_depth-slider"></div>
+                                            <input type="hidden" name="max_depth" id="max_depth" value="">
+                                        </div>
+                                    </div>
+                                    <br>
+
+                                    <div class="row text-center">
+                                        <label>learning_rate = <span class="example-val" id=
+                                        "learning_rate-value" style="color:#1AB394"></span> <i class=
+                                        "fa fa-question-circle" id="q16" style=
+                                        "color:#676a6c"></i></label>
+
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="learning_rate-slider"></div><input id=
+                                            "learning_rate" name="learning_rate" type="hidden" value="">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% else %}
+
+                            {% endif %}
+                        </section>
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-lg-4 col-lg-offset-2">
+                                <a href="/interactive/model"><button class="btn btn-primary mt-2 mx-auto" id="prev-btn"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Model</button></a>
+                            </div>
+                            <!--<div class="col-lg-3">
+                                <button class="btn btn-default mt-2 mx-auto" id="update-btn">Update Plots</button>
+                            </div>-->
+                            <div class="col-lg-4">
+                                <button type="submit" class="btn btn-primary mt-2 mx-auto">Save and Continue<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+
+            <!--<div class="ibox">
+                <div class="ibox-title">
+                    <h2>Visualization<span id="runtime" class="label label-warning pull-right">Runtime</span></h2>
+                </div>
+                <div class="ibox-content">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="ibox">
+                                <div class="ibox-title">
+                                    <span id="auroc" class="label label-primary pull-right">AUROC</span>
+                                    <h5>Receiver Operating Characteristic Curve</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div>
+                                        <div id="roc_curve" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="ibox">
+                                <div class="ibox-title">
+                                    <span id="aupr" class="label label-warning pull-right">AUPR</span>
+                                    <h5>Precision-Recall Curve</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div>
+                                        <div id="pr_curve" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>-->
+        </div>
+    </div>
+
+{% else %}
+    <div class="wrapper wrapper-content animated fadeIn">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content text-center p-md">
+                        <h2><span>Sorry! You must be logged in to access this area.</span></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row text-center">
+            <a href="/login" class="btn btn-default btn-sm"><span class="fa fa-sign-in"></span>&nbsp;&nbsp;Login</a>
+            <a href="/register" class="btn btn-default btn-sm"><span class="fa fa-user-plus"></span>&nbsp;&nbsp;Register</a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+    {{ parent() }}
+    {% javascripts
+    'assets/js/plugins/steps/jquery.steps.js'
+    'assets/js/plugins/validate/jquery.validate.min.js'
+    'assets/js/plugins/noUiSlider/jquery.nouislider.all.js'
+    'assets/js/plugins/qTip/jquery.qtip.js'
+    'assets/js/plugins/iCheck/icheck.js' output='compiled/js/create-analysis.js'
+    'assets/js/form_helpers.js' %}
+    <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+    {% if model.getName == 'Decision Tree' %}
+        <script>
+            $(document).ready(function() {
+                $('.i-checks').iCheck({
+                    checkboxClass: 'icheckbox_square-green',
+                    radioClass: 'iradio_square-green',
+                });
+                $('#max_features-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [{{ dataset.getNumFeatures }}]
+                    }
+                });
+                $('#max_features-slider').Link('lower').to($('#max_features-value'));
+                $('#max_features-slider').Link('lower').to($('#max_features'));
+                $('#min_samples_split-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [{{ dataset.getNumInstances }}]
+                    }
+                });
+                $('#min_samples_split-slider').Link('lower').to($('#min_samples_split-value'));
+                $('#min_samples_split-slider').Link('lower').to($('#min_samples_split'));
+                $('#max_leaf_nodes-slider').noUiSlider({
+                    start: [2],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [2],
+                        'max': [20]
+                    }
+                });
+                $('#max_leaf_nodes-slider').Link('lower').to($('#max_leaf_nodes-value'));
+                $('#max_leaf_nodes-slider').Link('lower').to($('#max_leaf_nodes'));
+                $('#min_samples_leaf-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [{{ dataset.getNumFeatures }}]
+                    }
+                });
+                $('#min_samples_leaf-slider').Link('lower').to($('#min_samples_leaf-value'));
+                $('#min_samples_leaf-slider').Link('lower').to($('#min_samples_leaf'));
+                $('#max_depth-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [20]
+                    }
+                });
+                $('#max_depth-slider').Link('lower').to($('#max_depth-value'));
+                $('#max_depth-slider').Link('lower').to($('#max_depth'));
+
+                $("#q9").qtip({
+                        content: {
+                            text: 'The function to measure the quality of a split. Supported criteria are “gini” for the Gini impurity and “entropy” for the information gain.',
+                            title:'<i>criterion </i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q10").qtip({
+                        content: {
+                            text: 'The strategy used to choose the split at each node. Supported strategies are “best” to choose the best split and “random” to choose the best random split.',
+                            title:'<i>splitter</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q11").qtip({
+                        content: {
+                            text: 'Grow a tree with <i>max_leaf_nodes</i> in best-first fashion. Best nodes are defined as relative reduction in impurity. If <strong>0</strong> then unlimited number of leaf nodes. If not <strong>0</strong> then <i>max_depth</i> will be ignored.',
+                            title:'<i>max_leaf_nodes</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q12").qtip({
+                        content: {
+                            text: 'The minimum number of samples required to be at a leaf node.',
+                            title:'<i>min_samples_leaf</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q13").qtip({
+                        content: {
+                            text: 'The number of features to consider when looking for the best split.',
+                            title:'<i>max_features</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q14").qtip({
+                        content: {
+                            text: 'The minimum number of samples required to split an internal node.',
+                            title:'<i>min_samples_split</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q15").qtip({
+                        content: {
+                            text: 'The maximum depth of the tree. If <strong>0</strong>, then nodes are expanded until all leaves are pure or until all leaves contain less than <i>min_samples_split</i> samples. Ignored if <i>max_leaf_nodes</i> is not <strong>0</strong>.',
+                            title:'<i>max_depth</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                })
+            });
+        </script>
+
+    {% elseif model.getName == 'K-Nearest Neighbors' %}
+
+        <script>
+            $(document).ready(function() {
+                $('.i-checks').iCheck({
+                    checkboxClass: 'icheckbox_square-green',
+                    radioClass: 'iradio_square-green',
+                });
+
+                $('#n_neighbors-slider').noUiSlider({
+                    start: [5],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [20]
+                    }
+                });
+                $('#n_neighbors-slider').Link('lower').to($('#n_neighbors-value'));
+                $('#n_neighbors-slider').Link('lower').to($('#n_neighbors'));
+
+                $('#leaf_size-slider').noUiSlider({
+                    start: [30],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [50]
+                    }
+                });
+                $('#leaf_size-slider').Link('lower').to($('#leaf_size-value'));
+                $('#leaf_size-slider').Link('lower').to($('#leaf_size'));
+
+
+                $("#q9").qtip({
+                    content: {
+                        text: 'Algorithm used to compute the nearest neighbors.',
+                        title:'<i>algorithm</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q10").qtip({
+                    content: {
+                        text: 'Weight function used in prediction.',
+                        title:'<i>weights</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q11").qtip({
+                    content: {
+                        text: 'Number of neighbors to use by default for k_neighbors queries.',
+                        title:'<i>n_neighbors</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q12").qtip({
+                    content: {
+                        text: 'The distance metric to use for computing closest neighbors. The default metric is minkowski, and with p=2 is equivalent to the standard Euclidean metric.',
+                        title:'<i>metric</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q13").qtip({
+                    content: {
+                        text: 'Leaf size passed to BallTree or KDTree. This can affect the speed of the construction and query, as well as the memory required to store the tree. The optimal value depends on the nature of the problem.',
+                        title:'<i>leaf_size</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+            });
+        </script>
+
+    {% elseif model.getName == 'Logistic Regression' %}
+
+        <script>
+            $(document).ready(function() {
+                $('.i-checks').iCheck({
+                    checkboxClass: 'icheckbox_square-green',
+                    radioClass: 'iradio_square-green',
+                });
+
+                $('#C-slider').noUiSlider({
+                    start: [1],
+                    step: 0.1,
+                    connect: "lower",
+                    range: {
+                        'min': [0.1],
+                        'max': [10]
+                    }
+                });
+                $('#C-slider').Link('lower').to($('#C-value'));
+                $('#C-slider').Link('lower').to($('#C'));
+
+                $('#intercept_scaling-slider').noUiSlider({
+                    start: [1],
+                    step: 0.1,
+                    connect: "lower",
+                    range: {
+                        'min': [0.1],
+                        'max': [10]
+                    }
+                });
+                $('#intercept_scaling-slider').Link('lower').to($('#intercept_scaling-value'));
+                $('#intercept_scaling-slider').Link('lower').to($('#intercept_scaling'));
+
+                $('#max_iter-slider').noUiSlider({
+                    start: [100],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [1000]
+                    }
+                });
+                $('#max_iter-slider').Link('lower').to($('#max_iter-value'));
+                $('#max_iter-slider').Link('lower').to($('#max_iter'));
+
+                $('#random_state-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [100]
+                    }
+                });
+                $('#random_state-slider').Link('lower').to($('#random_state-value'));
+                $('#random_state-slider').Link('lower').to($('#random_state'));
+
+                $('#tol-slider').noUiSlider({
+                    start: [1],
+                    step: 0.1,
+                    connect: "lower",
+                    range: {
+                        'min': [0.1],
+                        'max': [10]
+                    }
+                });
+                $('#tol-slider').Link('lower').to($('#tol-value'));
+                $('#tol-slider').Link('lower').to($('#tol'));
+
+
+                $("#q9").qtip({
+                    content: {
+                        text: 'Used to specify the norm used in the penalization. The newton-cg and lbfgs solvers support only l2 penalties.',
+                        title:'<i>Penalty</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q10").qtip({
+                    content: {
+                        text: 'Specifies if a constant (a.k.a. bias or intercept) should be added the decision function.',
+                        title:'<i>fit_intercept</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q11").qtip({
+                    content: {
+                        text: 'Algorithm to use in the optimization problem.',
+                        title:'<i>Solver</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q12").qtip({
+                    content: {
+                        text: 'Inverse of regularization strength; must be a positive float. Like in support vector machines, smaller values specify stronger regularization.',
+                        title:'<i>c</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q13").qtip({
+                    content: {
+                        text: 'Useful only if solver is liblinear. when self.fit_intercept is True, instance vector x becomes [x, self.intercept_scaling], i.e. a “synthetic” feature with constant value equals to intercept_scaling is appended to the instance vector. The intercept becomes intercept_scaling * synthetic feature weight Note! the synthetic feature weight is subject to l1/l2 regularization as all other features. To lessen the effect of regularization on synthetic feature weight (and therefore on the intercept) intercept_scaling has to be increased.',
+                        title:'<i>intercept_scaling</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q14").qtip({
+                    content: {
+                        text: 'Useful only for the newton-cg and lbfgs solvers. Maximum number of iterations taken for the solvers to converge.',
+                        title:'<i>max_iter</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q15").qtip({
+                    content: {
+                        text: 'The seed of the pseudo random number generator to use when shuffling the data.',
+                        title:'<i>random_state</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q16").qtip({
+                    content: {
+                        text: 'Tolerance for stopping criteria.',
+                        title:'<i>tol</i>'
+                    },
+                    style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+            });
+        </script>
+
+    {% elseif model.getName == 'Support Vector Machine' %}
+
+        <script>
+        $(document).ready(function() {
+            $('.i-checks').iCheck({
+                checkboxClass: 'icheckbox_square-green',
+                radioClass: 'iradio_square-green',
+            });
+
+            $('#C-slider').noUiSlider({
+                start: [1],
+                step: 0.1,
+                connect: "lower",
+                range: {
+                    'min': [0.1],
+                    'max': [10]
+                }
+            });
+            $('#C-slider').Link('lower').to($('#C-value'));
+            $('#C-slider').Link('lower').to($('#C'));
+
+            $('#max_iter-slider').noUiSlider({
+                start: [100],
+                step: 1,
+                connect: "lower",
+                range: {
+                    'min': [1],
+                    'max': [1000]
+                }
+            });
+            $('#max_iter-slider').Link('lower').to($('#max_iter-value'));
+            $('#max_iter-slider').Link('lower').to($('#max_iter'));
+
+            $('#random_state-slider').noUiSlider({
+                start: [1],
+                step: 1,
+                connect: "lower",
+                range: {
+                    'min': [1],
+                    'max': [100]
+                }
+            });
+            $('#random_state-slider').Link('lower').to($('#random_state-value'));
+            $('#random_state-slider').Link('lower').to($('#random_state'));
+
+            $('#degree-slider').noUiSlider({
+                start: [1],
+                step: 1,
+                connect: "lower",
+                range: {
+                    'min': [1],
+                    'max': [10]
+                }
+            });
+            $('#degree-slider').Link('lower').to($('#degree-value'));
+            $('#degree-slider').Link('lower').to($('#degree'));
+
+            $('#gamma-slider').noUiSlider({
+                start: [1],
+                step: 0.1,
+                connect: "lower",
+                range: {
+                    'min': [0.1],
+                    'max': [10]
+                }
+            });
+            $('#gamma-slider').Link('lower').to($('#gamma-value'));
+            $('#gamma-slider').Link('lower').to($('#gamma'));
+            $('#gamma-slider').attr('disabled', 'disabled');
+
+
+            $("#q9").qtip({
+                content: {
+                    text: 'Specifies the kernel type to be used in the algorithm. It must be one of ‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’ or a callable. If none is given, ‘rbf’ will be used. If a callable is given it is used to precompute the kernel matrix.',
+                    title:'<i>Kernel<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q10").qtip({
+                content: {
+                    text: 'Whether to use the shrinking heuristic.',
+                    title:'<i>shrinking<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q11").qtip({
+                content: {
+                    text: 'Penalty parameter C of the error term.',
+                    title:'<i>c<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q12").qtip({
+                content: {
+                    text: 'Hard limit on iterations within solver.',
+                    title:'<i>max_iter<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q13").qtip({
+                content: {
+                    text: 'The seed of the pseudo random number generator to use when shuffling the data for probability estimation.',
+                    title:'<i>random_state<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q14").qtip({
+                content: {
+                    text: 'Degree of the polynomial kernel function (‘poly’). Ignored by all other kernels.',
+                    title:'<i>degree<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q15").qtip({
+                content: {
+                    text: 'Kernel coefficient for ‘rbf’, ‘poly’ and ‘sigmoid’. If gamma is 0.0 then 1/n_features will be used instead.',
+                    title:'<i>gamma<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+
+
+            $( "#kernel" ).change(function () {
+                var kernel_choice = "";
+                $( "select option:selected" ).each(function() {
+                  kernel_choice = $( this ).val();
+                });
+
+                if (kernel_choice == 'linear') {
+                    $('#degree-slider').removeAttr('disabled');
+                    $('#degree-value').attr('class', "parameter_value");
+                }
+                else {
+                    $('#degree-slider').attr('disabled', 'disabled');
+                    $('#degree-value').attr('class', "parameter_value_off");
+                }
+
+                if (kernel_choice == 'rbf' || kernel_choice == 'poly' || kernel_choice == 'sigmoid') {
+                    $('#gamma-slider').removeAttr('disabled');
+                    $('#gamma-value').attr('class', "parameter_value");
+                }
+                else {
+                    $('#gamma-slider').attr('disabled', 'disabled');
+                    $('#gamma-value').attr('class', "parameter_value_off");
+                }
+
+            })
+            .change();
+        });
+
+        </script>
+
+    {% elseif model.getName == 'Stochastic Gradient Descent' %}
+
+        <script>
+        $(document).ready(function() {
+            $('.i-checks').iCheck({
+                checkboxClass: 'icheckbox_square-green',
+                radioClass: 'iradio_square-green',
+            });
+
+            $('#alpha-slider').noUiSlider({
+                start: [0.0001],
+                step: 0.0001,
+                connect: "lower",
+                range: {
+                    'min': [0],
+                    'max': [1]
+                }
+            });
+            $('#alpha-slider').Link('lower').to($('#alpha-value'));
+            $('#alpha-slider').Link('lower').to($('#alpha'));
+            $('#alpha-slider').Link('lower').to($('#input-alpha'));
+
+            $('#n_iter-slider').noUiSlider({
+                start: [5],
+                step: 1,
+                connect: "lower",
+                range: {
+                    'min': [1],
+                    'max': [1000]
+                }
+            });
+            $('#n_iter-slider').Link('lower').to($('#n_iter-value'));
+            $('#n_iter-slider').Link('lower').to($('#n_iter'));
+
+            $('#random_state-slider').noUiSlider({
+                start: [1],
+                step: 1,
+                connect: "lower",
+                range: {
+                    'min': [1],
+                    'max': [100]
+                }
+            });
+            $('#random_state-slider').Link('lower').to($('#random_state-value'));
+            $('#random_state-slider').Link('lower').to($('#random_state'));
+
+            $('#l1_ratio-slider').noUiSlider({
+                start: [0.15],
+                step: 0.1,
+                connect: "lower",
+                range: {
+                    'min': [0],
+                    'max': [1]
+                }
+            });
+            $('#l1_ratio-slider').Link('lower').to($('#l1_ratio-value'));
+            $('#l1_ratio-slider').Link('lower').to($('#l1_ratio'));
+
+            $('#epsilon-slider').noUiSlider({
+                start: [0.05],
+                step: 0.01,
+                connect: "lower",
+                range: {
+                    'min': [0],
+                    'max': [1]
+                }
+            });
+            $('#epsilon-slider').Link('lower').to($('#epsilon-value'));
+            $('#epsilon-slider').Link('lower').to($('#epsilon'));
+
+            $('#eta0-slider').noUiSlider({
+                start: [0.1],
+                step: 0.05,
+                connect: "lower",
+                range: {
+                    'min': [0.05],
+                    'max': [1]
+                }
+            });
+            $('#eta0-slider').Link('lower').to($('#eta0-value'));
+            $('#eta0-slider').Link('lower').to($('#eta0'));
+
+            $('#power_t-slider').noUiSlider({
+                start: [0.5],
+                step: 0.05,
+                connect: "lower",
+                range: {
+                    'min': [0],
+                    'max': [1]
+                }
+            });
+            $('#power_t-slider').Link('lower').to($('#power_t-value'));
+            $('#power_t-slider').Link('lower').to($('#power_t'));
+
+
+            $("#q9").qtip({
+                content: {
+                    text: 'The loss function to be used. Defaults to ‘hinge’, which gives a linear SVM. The ‘log’ loss gives logistic regression, a probabilistic classifier. ‘modified_huber’ is another smooth loss that brings tolerance to outliers as well as probability estimates. ‘squared_hinge’ is like hinge but is quadratically penalized. ‘perceptron’ is the linear loss used by the perceptron algorithm. The other losses are designed for regression but can be useful in classification as well.',
+                    title:'<i>loss Function<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q10").qtip({
+                content: {
+                    text: 'The penalty (aka regularization term) to be used. Defaults to ‘l2’ which is the standard regularizer for linear SVM models. ‘l1’ and ‘elasticnet’ might bring sparsity to the model (feature selection) not achievable with ‘l2’.',
+                    title:'<i>penalty<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q11").qtip({
+                content: {
+                    text: 'The learning rate schedule: constant: eta = eta0 optimal: eta = 1.0 / (t + t0) [default] invscaling: eta = eta0 / pow(t, power_t) where t0 is chosen by a heuristic proposed by Leon Bottou.',
+                    title:'<i>learning_rate<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q12").qtip({
+                content: {
+                    text: 'Whether the intercept should be estimated or not. If False, the data is assumed to be already centered. Defaults to True.',
+                    title:'<i>fit_intercept<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q13").qtip({
+                content: {
+                    text: 'When set to True, reuse the solution of the previous call to fit as initialization, otherwise, just erase the previous solution.',
+                    title:'<i>warm_start<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q14").qtip({
+                content: {
+                    text: 'Whether or not the training data should be shuffled after each epoch. Defaults to True.',
+                    title:'<i>shuffle<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q15").qtip({
+                content: {
+                    text: 'When set to True, computes the averaged SGD weights and stores the result in the coef_ attribute. If set to an int greater than 1, averaging will begin once the total number of samples seen reaches average. So average=10 will begin averaging after seeing 10 samples.',
+                    title:'<i>average<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q16").qtip({
+                content: {
+                    text: 'Constant that multiplies the regularization term. Defaults to 0.0001',
+                    title:'<i>alpha<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q17").qtip({
+                content: {
+                    text: 'The number of passes over the training data (aka epochs). The number of iterations is set to 1 if using partial_fit. Defaults to 5.',
+                    title:'<i>n_iter<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q18").qtip({
+                content: {
+                    text: 'The seed of the pseudo random number generator to use when shuffling the data.',
+                    title:'<i>random_state<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q19").qtip({
+                content: {
+                    text: 'The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1. l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1. Defaults to 0.15.',
+                    title:'<i>l1_ratio<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q20").qtip({
+                content: {
+                    text: 'Epsilon in the epsilon-insensitive loss functions; only if loss is ‘huber’, ‘epsilon_insensitive’, or ‘squared_epsilon_insensitive’. For ‘huber’, determines the threshold at which it becomes less important to get the prediction exactly right. For epsilon-insensitive, any differences between the current prediction and the correct label are ignored if they are less than this threshold.',
+                    title:'<i>epsilon<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q21").qtip({
+                content: {
+                    text: 'The initial learning rate for the ‘constant’ or ‘invscaling’ schedules. The default value is 0.0 as eta0 is not used by the default schedule ‘optimal’.',
+                    title:'<i>eta0<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            $("#q22").qtip({
+                content: {
+                    text: 'The exponent for inverse scaling learning rate [default 0.5].',
+                    title:'<i>power_t<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+        });
+
+        </script>
+
+    {% elseif model.getName == 'Random Forest' or model.getName == 'Extremely Randomized Trees'%}
+
+        <script>
+            $(document).ready(function() {
+                $('.i-checks').iCheck({
+                    checkboxClass: 'icheckbox_square-green',
+                    radioClass: 'iradio_square-green',
+                });
+                $('#max_features-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [{{ dataset.getNumFeatures }}]
+                    }
+                });
+                $('#max_features-slider').Link('lower').to($('#max_features-value'));
+                $('#max_features-slider').Link('lower').to($('#max_features'));
+                $('#min_samples_split-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [{{ dataset.getNumInstances }}]
+                    }
+                });
+                $('#min_samples_split-slider').Link('lower').to($('#min_samples_split-value'));
+                $('#min_samples_split-slider').Link('lower').to($('#min_samples_split'));
+                $('#max_leaf_nodes-slider').noUiSlider({
+                    start: [2],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [2],
+                        'max': [20]
+                    }
+                });
+                $('#max_leaf_nodes-slider').Link('lower').to($('#max_leaf_nodes-value'));
+                $('#max_leaf_nodes-slider').Link('lower').to($('#max_leaf_nodes'));
+                $('#min_samples_leaf-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [{{ dataset.getNumFeatures }}]
+                    }
+                });
+                $('#min_samples_leaf-slider').Link('lower').to($('#min_samples_leaf-value'));
+                $('#min_samples_leaf-slider').Link('lower').to($('#min_samples_leaf'));
+                $('#max_depth-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [20]
+                    }
+                });
+                $('#max_depth-slider').Link('lower').to($('#max_depth-value'));
+                $('#max_depth-slider').Link('lower').to($('#max_depth'));
+
+                $('#n_estimators-slider').noUiSlider({
+                    start: [10],
+                    step: 10,
+                    connect: "lower",
+                    range: {
+                        'min': [10],
+                        'max': [1000]
+                    }
+                });
+                $('#n_estimators-slider').Link('lower').to($('#n_estimators-value'));
+                $('#n_estimators-slider').Link('lower').to($('#n_estimators'));
+
+                $('#random_state-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [100]
+                    }
+                });
+                $('#random_state-slider').Link('lower').to($('#random_state-value'));
+                $('#random_state-slider').Link('lower').to($('#random_state'));
+
+                $("#q9").qtip({
+                        content: {
+                            text: 'The function to measure the quality of a split. Supported criteria are “gini” for the Gini impurity and “entropy” for the information gain.',
+                            title:'<i>criterion </i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q10").qtip({
+                        content: {
+                            text: 'Whether bootstrap samples are used when building trees.',
+                            title:'<i>boostrap</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q11").qtip({
+                        content: {
+                            text: 'Whether to use out-of-bag samples to estimate the generalization error.',
+                            title:'<i>oob_score</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q12").qtip({
+                        content: {
+                            text: 'When set to True, reuse the solution of the previous call to fit and add more estimators to the ensemble, otherwise, just fit a whole new forest.',
+                            title:'<i>warm_start</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q13").qtip({
+                        content: {
+                            text: 'Grow a tree with <i>max_leaf_nodes</i> in best-first fashion. Best nodes are defined as relative reduction in impurity. If <strong>0</strong> then unlimited number of leaf nodes. If not <strong>0</strong> then <i>max_depth</i> will be ignored.',
+                            title:'<i>max_leaf_nodes</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q14").qtip({
+                        content: {
+                            text: 'The minimum number of samples required to be at a leaf node.',
+                            title:'<i>min_samples_leaf</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q15").qtip({
+                        content: {
+                            text: 'The number of features to consider when looking for the best split.',
+                            title:'<i>max_features</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                 $("#q16").qtip({
+                        content: {
+                            text: 'The number of trees in the forest.',
+                            title:'<i>num_estimators</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q17").qtip({
+                        content: {
+                            text: 'The minimum number of samples required to split an internal node.',
+                            title:'<i>min_samples_split</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q18").qtip({
+                        content: {
+                            text: 'The maximum depth of the tree. If <strong>0</strong>, then nodes are expanded until all leaves are pure or until all leaves contain less than <i>min_samples_split</i> samples. Ignored if <i>max_leaf_nodes</i> is not <strong>0</strong>.',
+                            title:'<i>max_depth</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                })
+                $("#q19").qtip({
+                content: {
+                    text: 'The seed of the pseudo random number generator to use when shuffling the data.',
+                    title:'<i>random_state<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            });
+        </script>
+
+    {% elseif model.getName == 'Gradient Boosting' %}
+
+        <script>
+            $(document).ready(function() {
+                $('.i-checks').iCheck({
+                    checkboxClass: 'icheckbox_square-green',
+                    radioClass: 'iradio_square-green',
+                });
+                $('#max_features-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [{{ dataset.getNumFeatures }}]
+                    }
+                });
+                $('#max_features-slider').Link('lower').to($('#max_features-value'));
+                $('#max_features-slider').Link('lower').to($('#max_features'));
+                $('#min_samples_split-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [{{ dataset.getNumInstances }}]
+                    }
+                });
+                $('#min_samples_split-slider').Link('lower').to($('#min_samples_split-value'));
+                $('#min_samples_split-slider').Link('lower').to($('#min_samples_split'));
+                $('#max_leaf_nodes-slider').noUiSlider({
+                    start: [2],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [2],
+                        'max': [20]
+                    }
+                });
+                $('#max_leaf_nodes-slider').Link('lower').to($('#max_leaf_nodes-value'));
+                $('#max_leaf_nodes-slider').Link('lower').to($('#max_leaf_nodes'));
+                $('#min_samples_leaf-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [{{ dataset.getNumFeatures }}]
+                    }
+                });
+                $('#min_samples_leaf-slider').Link('lower').to($('#min_samples_leaf-value'));
+                $('#min_samples_leaf-slider').Link('lower').to($('#min_samples_leaf'));
+                $('#max_depth-slider').noUiSlider({
+                    start: [1],
+                    step: 1,
+                    connect: "lower",
+                    range: {
+                        'min': [1],
+                        'max': [20]
+                    }
+                });
+                $('#max_depth-slider').Link('lower').to($('#max_depth-value'));
+                $('#max_depth-slider').Link('lower').to($('#max_depth'));
+
+                $('#n_estimators-slider').noUiSlider({
+                    start: [10],
+                    step: 10,
+                    connect: "lower",
+                    range: {
+                        'min': [10],
+                        'max': [1000]
+                    }
+                });
+                $('#n_estimators-slider').Link('lower').to($('#n_estimators-value'));
+                $('#n_estimators-slider').Link('lower').to($('#n_estimators'));
+
+                $('#learning_rate-slider').noUiSlider({
+                    start: [0.1],
+                    step: 0.05,
+                    connect: "lower",
+                    range: {
+                        'min': [0.05],
+                        'max': [1]
+                    }
+                });
+                $('#learning_rate-slider').Link('lower').to($('#learning_rate-value'));
+                $('#learning_rate-slider').Link('lower').to($('#learning_rate'));
+
+                $("#q9").qtip({
+                        content: {
+                            text: 'When set to True, reuse the solution of the previous call to fit and add more estimators to the ensemble, otherwise, just fit a whole new forest.',
+                            title:'<i>warm_start</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q10").qtip({
+                        content: {
+                            text: 'Grow a tree with <i>max_leaf_nodes</i> in best-first fashion. Best nodes are defined as relative reduction in impurity. If <strong>0</strong> then unlimited number of leaf nodes. If not <strong>0</strong> then <i>max_depth</i> will be ignored.',
+                            title:'<i>max_leaf_nodes</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q11").qtip({
+                        content: {
+                            text: 'The minimum number of samples required to be at a leaf node.',
+                            title:'<i>min_samples_leaf</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q12").qtip({
+                        content: {
+                            text: 'The number of features to consider when looking for the best split.',
+                            title:'<i>max_features</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                 $("#q13").qtip({
+                        content: {
+                            text: 'The number of trees in the forest.',
+                            title:'<i>num_estimators</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q14").qtip({
+                        content: {
+                            text: 'The minimum number of samples required to split an internal node.',
+                            title:'<i>min_samples_split</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                });
+                $("#q15").qtip({
+                        content: {
+                            text: 'The maximum depth of the tree. If <strong>0</strong>, then nodes are expanded until all leaves are pure or until all leaves contain less than <i>min_samples_split</i> samples. Ignored if <i>max_leaf_nodes</i> is not <strong>0</strong>.',
+                            title:'<i>max_depth</i>'
+                        },
+                        style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+                })
+                $("#q16").qtip({
+                content: {
+                    text: 'learning rate shrinks the contribution of each tree by learning_rate. There is a trade-off between learning_rate and n_estimators.',
+                    title:'<i>learning_rate<\/i>'
+                },
+                style: { classes: 'qtip-rounded qtip-shadow qtip-cream' }
+            });
+            });
+        </script>
+        {% endif %}
+
+<script type="text/javascript">
+var roc, prc;
+
+roc = {
+        title: {
+            text: ''
+        },
+        xAxis: {
+            title: {
+                text: 'False positive rate'
+            },
+            min: 0,
+            max: 1,
+            tickInterval: 0.1
+        },
+        yAxis: {
+            title: {
+                text: 'True positive rate'
+            },
+            min: 0,
+            max: 1,
+            tickInterval: 0.1
+        },
+        legend: {
+            enabled: false
+        },
+        exporting: {
+            enabled: false
+        },
+        credits: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                    stops: [
+                        [0, '#59A595'],
+                        [1, Highcharts.Color('#59A595').setOpacity(0).get('rgba')]]
+                },
+                marker: {
+                    enabled: false
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+        tooltip:{
+            formatter:function(){
+                console.log(this);
+                return '<b>FPR: </b>' + this.key + '<br><b>TPR: </b>' + this.y;
+            }
+        },
+        series: []
+    };
+
+prc = {
+        title: {
+            text: ''
+        },
+        xAxis: {
+            title: {
+                text: 'Recall'
+            },
+            min: 0,
+            max: 1,
+            tickInterval: 0.1
+        },
+        yAxis: {
+            title: {
+                text: 'Precision'
+            },
+            min: 0,
+            max: 1,
+            tickInterval: 0.1
+        },
+        legend: {
+            enabled: false
+        },
+        exporting: {
+            enabled: false
+        },
+        credits: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                    stops: [
+                        [0, '#f8ac59'],
+                        [1, Highcharts.Color('#f8ac59').setOpacity(0).get('rgba')]
+                    ]
+                },
+                marker: {
+                    enabled: false
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+        tooltip:{
+            formatter:function(){
+                console.log(this);
+                return '<b>Recall: </b>' + this.key + '<br><b>Precision: </b>' + this.y;
+            }
+        },
+        series: []
+    };
+
+    $(function(){
+        $('#update-btn').on("click", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var $target, inputs, outputs;
+            inputs = $("#form").serialize();
+            outputs = {};
+
+            $target = $(e.target);
+            $target.prop("disabled", true);
+            $.ajax({
+                url: "/interactive/update/parameterization",
+                method: "GET",
+                dataType: "application/json",
+                data: inputs,
+                success: function(response) {
+                    roc["series"] = [{
+                        type: 'area',
+                        color: '#127e68',
+                        data: [
+                            response["roc_points"]
+                        ]
+                    }];
+
+                    prc["series"] = [{
+                        type: 'area',
+                        color: '#B68651',
+                        data: [
+                            response["prc_points"]
+                        ]
+                    }];
+
+                    $('#roc_curve').highcharts(roc);
+                    $('#pr_curve').highcharts(prc);
+
+                    $("#auroc").val("AUROC = " + response["auroc"]);
+                    $("#aupr").val("AUPR = " + response["aupr"]);
+                },
+                error: function(xhr, status, error) {
+                    outputs = {errormsg: "An error occurred while processing the request "};
+                    console.log(outputs);
+                    console.log(status, error);
+                },
+                complete: function() {
+                    $target.prop("disabled", false);
+                }
+            });
+
+            return false;
+        });
+    });
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets
+    'assets/css/plugins/iCheck/custom.css'
+    'assets/css/plugins/steps/jquery.steps.css'
+    'assets/css/plugins/noUiSlider/jquery.nouislider.css'
+    'assets/css/plugins/qTip/jquery.qtip.css' filter='cssrewrite' output='compiled/css/create-analysis.css' %}
+    <link href="{{ asset_url }}" rel="stylesheet" type="text/css" />
+    {% endstylesheets %}
+{% endblock %}
+
+{% block body %}
+
+{% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+    <br><br>
+    <div class="row">
+        <div class="col-lg-10 col-lg-offset-1">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h2>Dataset</h2>
+                    <ul class="nav nav-pills">
+                        <li role="presentation"><a href="/interactive/workflow">Workflow</a></li>
+                        <li role="presentation" class="active"><a href="/interactive/dataset">Dataset</a></li>
+                        <li role="presentation"><a href="/interactive/preprocessing">Preprocessing</a></li>
+                        <li role="presentation"><a href="/interactive/reduction">Reduction</a></li>
+                        <li role="presentation"><a href="/interactive/sampling">Sampling</a></li>
+                        <li role="presentation"><a href="/interactive/model">Model</a></li>
+                        <li role="presentation"><a href="/interactive/parameterization">Parameterization</a></li>
+                        <li role="presentation"><a href="/interactive/result">Result</a></li>
+                    </ul>
+                </div>
+                <div class="ibox-content">
+
+                    <form id="form" action="/interactive/submit/dataset" method="POST" class="wizard-big">
+                        <section>
+                            <h3>Select the dataset:</h3>
+
+                            <div class="row">
+                                <div class="col-lg-5">
+                                    <div class="form-group">
+                                        <select id="dataset" name="dataset" class="form-control required">
+                                            {% for dataset in datasets %}
+                                                {% if current and dataset.id == current.getId() %}
+                                                <option value={{ dataset.id|e }} selected>{{ dataset.name|e }}</option>
+                                                {% else %}
+                                                <option value={{ dataset.id|e }}>{{ dataset.name|e }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-lg-5 col-lg-offset-1">
+                                    Add dataset description here.
+                                </div>
+                            </div>
+                        </section>
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-lg-4 col-lg-offset-3">
+                                <a href="/interactive/workflow"><button class="btn btn-primary mt-2 mx-auto" id="prev-btn"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Workflow</button></a>
+                            </div>
+                            <div class="col-lg-4">
+                                <button type="submit" class="btn btn-primary mt-2 mx-auto" type="submit">Save and Continue<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="wrapper wrapper-content animated fadeIn">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content text-center p-md">
+                        <h2><span>Sorry! You must be logged in to access this area.</span></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row text-center">
+            <a href="/login" class="btn btn-default btn-sm"><span class="fa fa-sign-in"></span>&nbsp;&nbsp;Login</a>
+            <a href="/register" class="btn btn-default btn-sm"><span class="fa fa-user-plus"></span>&nbsp;&nbsp;Register</a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+    {{ parent() }}
+    {% javascripts
+    'assets/js/plugins/steps/jquery.steps.js'
+    'assets/js/plugins/validate/jquery.validate.min.js'
+    'assets/js/plugins/noUiSlider/jquery.nouislider.all.js'
+    'assets/js/plugins/qTip/jquery.qtip.js'
+    'assets/js/plugins/iCheck/icheck.js' output='compiled/js/create-analysis.js'
+    'assets/js/form_helpers.js' %}
+    <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+
+{% endblock %}

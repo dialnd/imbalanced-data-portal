@@ -42,7 +42,7 @@ preprocessing_params = json.loads(analysis[1])
 
 def undersample(x, y, ix, subsampling_rate=1.0):
     """ Data undersampling.
-    
+
     This function takes in a list or array indexes that will be used for training
     and it performs subsampling in the majority class (c == 0) to enforce a certain ratio
     between the two classes
@@ -56,10 +56,10 @@ def undersample(x, y, ix, subsampling_rate=1.0):
         The array indexes for the instances that will be used for training
     subsampling_rate : float
         The desired percentage of majority instances in the subsample
-    
+
     Returns
     --------
-    np.ndarray 
+    np.ndarray
         The new list of array indexes to be used for training
     """
 
@@ -80,16 +80,16 @@ def SMOTE(T, N, k, h = 1.0):
     ----------
     T : array-like, shape = [n_minority_samples, n_features]
         Holds the minority samples
-    N : percetange of new synthetic samples: 
+    N : percetange of new synthetic samples:
         n_synthetic_samples = N/100 * n_minority_samples. Can be < 100.
-    k : int. Number of nearest neighbours. 
+    k : int. Number of nearest neighbours.
     Returns
     -------
-    S : Synthetic samples. array, 
-        shape = [(N/100) * n_minority_samples, n_features]. 
-    """    
+    S : Synthetic samples. array,
+        shape = [(N/100) * n_minority_samples, n_features].
+    """
     n_minority_samples, n_features = T.shape
-    
+
     if N < 100:
         #create synthetic samples only for a subset of T.
         #TODO: select random minortiy samples
@@ -98,28 +98,28 @@ def SMOTE(T, N, k, h = 1.0):
 
     if (N % 100) != 0:
         raise ValueError("N must be < 100 or multiple of 100")
-    
+
     N = N/100
     n_synthetic_samples = N * n_minority_samples
     S = np.zeros(shape=(n_synthetic_samples, n_features))
-    
+
     #Learn nearest neighbours
     neigh = NearestNeighbors(n_neighbors = k)
     neigh.fit(T)
-    
+
     #Calculate synthetic samples
     for i in xrange(n_minority_samples):
         nn = neigh.kneighbors(T[i], return_distance=False)
         for n in xrange(N):
             nn_index = random.choice(nn[0])
-            #NOTE: nn includes T[i], we don't want to select it 
+            #NOTE: nn includes T[i], we don't want to select it
             while nn_index == i:
                 nn_index = random.choice(nn[0])
-                
+
             dif = T[nn_index] - T[i]
             gap = np.random.uniform(low = 0.0, high = h)
             S[n + i * N, :] = T[i,:] + gap * dif[:]
-    
+
     return S
 
 #########################################
@@ -141,7 +141,7 @@ elif(preprocessing_params['missing_data'] == 'average'):
 elif (preprocessing_params['missing_data'] == 'interpolation'):
     X = X.interpolate()
 
-s = ' + '.join(X.columns) + ' -1' 
+s = ' + '.join(X.columns) + ' -1'
 # Note: The encoding below could create very large dataframes for datasets with many categorical features.
 X = patsy.dmatrix(s, X, return_type='dataframe').values
 
@@ -204,11 +204,11 @@ model_params = ast.literal_eval(analysis[2])
 if (analysis[3] == 6):
     model_params['shuffle'] = bool(model_params['shuffle'])
 
-# Grab correct classifier and set the parameters based on what the user specified 
+# Grab correct classifier and set the parameters based on what the user specified
 if (analysis[2]):
 	clf = clfs[analysis[3]].set_params(**model_params)
 else:
-	clf = clfs[analysis[3]] 
+	clf = clfs[analysis[3]]
 
 # Run 10-fold cross validation and compute AUROC
 mean_tpr = 0.0
@@ -222,7 +222,7 @@ skf = cross_validation.StratifiedKFold(y, n_folds=10)
 
 from scipy.stats import itemfreq
 for train_index, test_index in skf:
-    
+
     if preprocessing_params['undersampling']:
         train_index = undersample(X,y,train_index,float(preprocessing_params['undersampling_rate'])/100)
 
@@ -233,26 +233,26 @@ for train_index, test_index in skf:
         minority = X_train[np.where(y_train==1)]
         smotted = SMOTE(minority, preprocessing_params['undersampling_rate'], 5)
         X_train = np.vstack((X_train,smotted))
-        y_train = np.append(y_train,np.ones(len(smotted),dtype=np.int32))          
+        y_train = np.append(y_train,np.ones(len(smotted),dtype=np.int32))
 
-    clf.fit(X_train, y_train)        
+    clf.fit(X_train, y_train)
     probas_ = clf.predict_proba(X[test_index])
     preds_ = clf.predict(X[test_index])
-    
+
     # Compute ROC curve and area the curve
     fpr, tpr, thresholds = roc_curve(y[test_index], probas_[:, 1])
 
     mean_tpr += interp(mean_fpr, fpr, tpr)
     mean_tpr[0] = 0.0
-    
+
     # Keep track of original y-values and corresponding predicted probabilities and values
     y_original_values = np.concatenate((y_original_values,y[test_index]),axis=0)
     y_prob = np.concatenate((y_prob,probas_[:, 1]),axis=0)
     y_pred = np.concatenate((y_pred,preds_),axis=0)
     indexes = np.concatenate((indexes,test_index),axis=0)
-    
 
-# Compute TPR and AUROC    
+
+# Compute TPR and AUROC
 mean_tpr /= len(skf)
 mean_tpr[-1] = 1.0
 auroc = auc(mean_fpr, mean_tpr)
@@ -313,4 +313,3 @@ db.commit()
 # Close connection with the database
 cursor.close()
 db.close()
-

@@ -1,0 +1,29 @@
+#viz {
+    overflow: hidden;
+}
+
+.viz-image {
+    width: 40%;
+    height: auto;
+    float: left;
+    display: inline-block;
+    margin-left: 10%;
+    margin-right: 10%;
+}
+
+.workflow-desc {
+    display: none;
+}
+
+.float-panel {
+    position: absolute;
+    left: auto;
+    right: auto;
+    z-index: 999;
+    overflow: hidden;
+    top: 110%;
+}
+
+.dataset-textarea {
+    width: 100%;
+}

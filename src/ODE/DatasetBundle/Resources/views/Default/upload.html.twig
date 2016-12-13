@@ -1,5 +1,17 @@
 {% extends 'base.html.twig'%}
 
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets
+    'assets/css/plugins/iCheck/custom.css'
+    'assets/css/plugins/steps/jquery.steps.css'
+    'assets/css/plugins/noUiSlider/jquery.nouislider.css'
+    'assets/css/interactive_styles.css'
+    'assets/css/plugins/qTip/jquery.qtip.css' filter='cssrewrite' output='compiled/css/create-analysis.css' %}
+    <link href="{{ asset_url }}" rel="stylesheet" type="text/css" />
+    {% endstylesheets %}
+{% endblock %}
+
 {% block body %}
     {% if not success %}
     <div class="row" style="padding: 50px 100px 19px 50px;">
@@ -26,6 +38,16 @@
                 <input type="text" class="form-control" name="datadesc" id="datadesc">
                 </div>
             </div>
+            <div class="form-group">
+                <div class="col-lg-6">
+                    <label for="keywords">Keywords:</label><br />
+                    <textarea id="keywords" class="dataset-textarea" name="keywords" placeholder="key1,key2,key3..."></textarea>
+                </div>
+                <div class="col-lg-6">
+                    <label for="citations">Citations:</label><br />
+                    <textarea id="citations" class="dataset-textarea" name="citations" placeholder="ref1,ref2,ref3..."></textarea>
+                </div>
+            </div>
             <br /><br />
             <hr />
             <div class="span7 text-center p-lg">
@@ -36,9 +58,87 @@
             <h2>{{ message }}</h2>
         </div>
     </div>
+
     {% else %}
         <div class="row span12 text-center">
             <h2>{{ message }}</h2>
         </div>
     {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    {{ parent() }}
+    {% javascripts
+    'assets/js/plugins/steps/jquery.steps.js'
+    'assets/js/plugins/validate/jquery.validate.min.js'
+    'assets/js/plugins/noUiSlider/jquery.nouislider.all.js'
+    'assets/js/plugins/qTip/jquery.qtip.js'
+    'assets/js/plugins/iCheck/icheck.js' output='compiled/js/create-analysis.js'
+    'assets/js/form_helpers.js' %}
+    <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+
+<script type="text/javascript">
+    $(function() {
+        $("#keyword-btn").on("click", function(e){
+            var $keyblock, $keyform;
+            e.preventDefault();
+            e.stopPropagation();
+
+            $keyblock = $("#keywords");
+            $keyform = $("#key-inputs");
+
+            $(".key-input").each(function(i, e) {
+                var $key;
+                $key = $(e);
+                $key.prop('deactivated', false);
+                $keyform.append($key)
+            });
+
+            $keyform.animate({top: "10%"});
+
+            return false;
+        });
+
+        $("#key-add").on("click", function(e) {
+            var key;
+            e.preventDefault();
+            e.stopPropagation();
+
+            key = $('<input type="text" class="key-input" placeholder="New key" />');
+            $("#key-inputs").append(key);
+
+            return false;
+        });
+
+        $("#key-okay").on("click", function(e) {
+            var $keyblock, $keyform;
+            e.preventDefault();
+            e.stopPropagation();
+
+            $keyblock = $("#keywords");
+            $keyform = $("#key-inputs");
+
+            $(".key-input").each(function(i, e) {
+                var $key;
+                $key = $(e);
+                if ($key.val() !== '') {
+                    $key = $(e);
+                    $key.prop('deactivated', true);
+                    $keyblock.append($key);
+                }
+            });
+
+            $keyform.animate({top: "110%"});
+            $keyform.empty();
+
+            return false;
+        });
+
+        $("#key-cancel").on("click", function(e) {
+
+        });
+    });
+</script>
+
 {% endblock %}
