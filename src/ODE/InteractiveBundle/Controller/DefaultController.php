@@ -6,6 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use ODE\InteractiveBundle\Entity\Workflow;
+use Symfony\Component\Validator\Constraints\DateTime;
 
 class DefaultController extends Controller
 {
@@ -33,6 +34,18 @@ class DefaultController extends Controller
         'results' => 'ode_results_page'
     );
 
+    private $model_map = array(
+        "Decision Tree" => "decision_tree",
+        "Gaussian Naive Bayes" => "naive_bayes",
+        "K-Nearest Neighbors" => "knn",
+        "Logistic Regression" => "logistic_regression",
+        "Support Vector Machine" => "svc",
+        "Stochastic Gradient Descent" => "sgd",
+        "Random Forest" => "random_forest",
+        "Extremely Randomized Trees" => "extra_trees",
+        "Gradient Boosting" => "gradient_boost"
+    );
+
     public function indexAction($stage, Request $request) {
         $session = $this->get('session');
         $workflow = array();
@@ -56,9 +69,9 @@ class DefaultController extends Controller
         $em = $this->getDoctrine()->getManager();
         $workflows = $em->getRepository('ODEInteractiveBundle:Workflow')->findBy(['user' => $user->getId()], ['name' => 'ASC']);
 
-        if ($session->has('workflow')) {
-            $workflow = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'));
-        }
+        #if ($session->has('workflow')) {
+        #    $workflow = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'));
+        #}
 
         return $this->render('@ODEInteractive/Default/createWorkflow.html.twig',
                              array(
@@ -70,17 +83,20 @@ class DefaultController extends Controller
 
     public function submitWorkflowAction(Request $request) {
         $session = $this->get('session');
-        $w_id = $request->query->get('workflow');
+        $w_id = $request->request->get('workflow');
 
-        $workflow = null;
-
-        if (!strcmp($w_id, 'new')) {
+        if ($w_id === 'new') {
             $em = $this->getDoctrine()->getManager();
-            $name = $request->query->get('workflow');
+            $name = $request->request->get('name');
             $workflow = new Workflow();
-            $workflow->setName(mysql_real_escape_string($name));
-            $workflow->setUser($this->getUser()->getId());
-            $workflow->setDate(new DateTime());
+            $workflow->setName($name);
+            $workflow->setUser($this->getUser());
+            $workflow->setDate(new \DateTime());
+            $workflow->setPreprocessing(array());
+            $workflow->setReduction(array());
+            $workflow->setSampling(array());
+            $workflow->setParameterization(array());
+            $workflow->setResult(array());
             $workflow->setMaxStage('workflow');
             $em->persist($workflow);
             $em->flush();
@@ -134,7 +150,23 @@ class DefaultController extends Controller
      * Loads the interface to perform under/oversampling.
      */
     public function createSamplingAction(Request $request) {
-        return $this->render('@ODEInteractive/Default/createSampling.html.twig');
+        $session = $this->get('session');
+        $em = $this->getDoctrine()->getManager();
+        $workflow = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'));
+        $reduction = $workflow->getReduction();
+        $dataset = $workflow->getDataset();
+
+        $n_features = $dataset->getNumFeatures();
+
+        if ($reduction['pca']) {
+            $n_features = (int)$reduction['n_components'];
+        }
+
+        return $this->render('@ODEInteractive/Default/createSampling.html.twig',
+                             array(
+                                 "n_features" => $n_features
+                             )
+        );
     }
 
     /**
@@ -203,6 +235,24 @@ class DefaultController extends Controller
         $workflow = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'));
         $dataset = $workflow->getDataset();
         $n_features = $dataset->getNumFeatures();
+        $w_id = $session->get('workflow');
+        if (!file_exists(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id)) {
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id, 0777, true);
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/preprocessing');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/reduction');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/fold0');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/fold1');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/fold2');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/fold3');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/fold4');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/fold5');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/fold6');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/fold7');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/fold8');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/fold9');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/parameterization');
+            mkdir(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/sampling');
+        }
 
         if (!$n_features || $n_features < 0) {
             $n_features = 4;
@@ -222,7 +272,8 @@ class DefaultController extends Controller
         $session = $this->get("session");
         $w_id = $session->get("workflow");
         $em = $this->getDoctrine()->getManager();
-        $dataset = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'))->getDataset();
+        $workflow = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'));
+        $dataset = $workflow->getDataset();
 
         $missing_data = $request->query->get("missing_data");
         $standardization = ($request->query->get("standardization") == '1' ? true : false);
@@ -231,6 +282,7 @@ class DefaultController extends Controller
         $binarization = ($request->query->get("binarization") == '1' ? true : false);
         $b_thresh = $request->query->get("binarization_threshold");
         $outliers = ($request->query->get("outlier_detection") == '1' ? true : false);
+
 
         $filename = $dataset->getFilename();
         $script_args = "--dataset $filename.csv --workflow $w_id --missing-data $missing_data";
@@ -249,7 +301,7 @@ class DefaultController extends Controller
 
         $output = $this->runPython("run_preprocessing.py", $script_args);
 
-        $graphs = file_get_contents(__DIR__.'/../../../../web/assets/workflows/'.$w_id.'/preprocessing/graph_data.json');
+        $graphs = file_get_contents(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/preprocessing/graph_data.json');
 
         $response = new Response($graphs);
         $response->setStatusCode(200);
@@ -273,7 +325,7 @@ class DefaultController extends Controller
 
         $workflow->setPreprocessing($settings);
         $workflow->setMaxStage('preprocessing');
-        $em->flush()
+        $em->flush();
 
         return $this->redirect($this->generateUrl($this->templates["reduction"]));
     }
@@ -292,25 +344,14 @@ class DefaultController extends Controller
         $session = $this->get('session');
         $w_id = $session->get('workflow');
 
-        if ($session->has('workflow')) {
-            $workflow = $session->get('workflow');
-
-            if (!array_key_exists('id', $workflow)) {
-                $this->redirect('/interactive/workflow');
-            }
-        }
-        else {
-            $this->redirect('/interactive/workflow');
-        }
-
         $reduction = ($request->query->get('pca') == '1' ? true : false);
-        $n_components = $request->query->get('n_componenets');
+        $n_components = $request->query->get('n_components');
 
         $script = 'run_reduction.py';
         $script_args = "--workflow $w_id";
 
         if ($reduction) {
-            $script_args .= "--reduce --n-components $n_components";
+            $script_args .= " --reduce --n-components $n_components";
         }
 
         $this->runPython($script, $script_args);
@@ -330,8 +371,8 @@ class DefaultController extends Controller
         $workflow = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'));
 
         $reduction = array();
-        $reduction['pca'] = $request->request->get('pca');
-        $reduction['n_components'] = $request->request->get('n_components');
+        $reduction['pca'] = $request->query->get('pca');
+        $reduction['n_components'] = $request->query->get('n_components');
 
         $workflow->setReduction($reduction);
         $workflow->setMaxStage('reduction');
@@ -344,13 +385,15 @@ class DefaultController extends Controller
      * Loads the interface to choose a model and parameterization.
      */
     public function createModelAction(Request $request) {
+        $session = $this->get('session');
         $em = $this->getDoctrine()->getManager();
         $models = $em->getRepository('ODEAnalysisBundle:Model')->findBy([], ['name' => 'ASC']);
         $workflow = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'));
+        $model = $workflow->getModel();
         return $this->render('@ODEInteractive/Default/createModel.html.twig',
                              array(
                                  'models' => $models,
-                                 'model' => $workflow->getModel()
+                                 'model' => $model
                              ));
 
     }
@@ -363,13 +406,14 @@ class DefaultController extends Controller
 
         $model_id = $request->query->get('model');
 
-        if ($model_id != $model->getID()) {
+        if (!$model || $model_id != $model->getID()) {
             $model = $em->getRepository('ODEAnalysisBundle:Model')->find($model_id);
             $workflow->setModel($model);
-            $workflow->setParameterization(null);
-            $workflow->setMaxStage('model');
-            $em->flush();
+            $workflow->setParameterization(array());
         }
+
+        $workflow->setMaxStage('model');
+        $em->flush();
 
         return $this->redirect('/interactive/parameterization');
     }
@@ -382,7 +426,7 @@ class DefaultController extends Controller
         $em = $this->getDoctrine()->getManager();
         $workflow = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'));
         $dataset = $workflow->getDataset();
-        $model = $model->getModel();
+        $model = $workflow->getModel();
 
         return $this->render('@ODEInteractive/Default/createParameterization.html.twig',
                      array(
@@ -396,22 +440,22 @@ class DefaultController extends Controller
         $w_id = $session->get('workflow');
         $em = $this->getDoctrine()->getManager();
         $workflow = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'));
-        $dataset = $workflow->getDataset();
-        $model = $workflow.getModel();
+        $model = $workflow->getModel();
 
-        $model_params = json_decode($model->getParameters());
+        $model_params = $model->getParameters();
         $params = array();
         foreach ($model_params as $key => $value) {
-            $params[$key] = $request->query->get($key);
+            $model_params->{$key} = $request->query->get($key);
         }
 
-        $name = $model->getName();
-        $params = json_encode($params);
-        $script_args = "-w $w_id --model $name --model-params $params";
+        $name = $this->model_map[$model->getName()];
+        $params = json_encode($model_params);
+        $script = 'run_model.py';
+        $script_args = "-w $w_id --model $name --model-params $model_params";
 
         $this->runPython($script, $script_args);
 
-        $graphs = file_get_contents(__DIR__.'/../../../../web/assets/workflows/'.$w_id.'/parameterization/graph_data.json');
+        $graphs = file_get_contents(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/parameterization/graph_data.json');
 
         $response = new Response($graphs);
         $response->setStatusCode(200);
@@ -430,11 +474,12 @@ class DefaultController extends Controller
         $model_params = $model->getParameters();
         $params = array();
         foreach ($model_params as $key => $value) {
-            $params[$key] = $request->query->get($key);
+            $params[$key] = $request->get($key);
         }
 
         $workflow->setParameterization($params);
         $workflow->setMaxStage('parameterization');
+        $em->flush();
 
         return $this->redirect('/interactive/results');
     }
@@ -452,16 +497,17 @@ class DefaultController extends Controller
         $model = $workflow->getModel();
         $user = $workflow->getUser();
 
-        $w_id = $workflow['id'];
-        $model_name = $model->getName();
+        $model_name = $this->model_map[$model->getName()];
         $model_params = json_encode($workflow->getParameterization());
+        file_put_contents(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/parameterization.json', $model_params);
+        #$model_params =
 
         $script = 'run_model.py';
-        $script_args = "-w $w_id --analyze --model $model_name --model-params $model_params";
+        $script_args = "-w $w_id --analysis --model $model_name --model-params parameterization.json";
 
         $this->runPython($script, $script_args);
 
-        $res = json_decode(file_get_contents(__DIR__.'/../../../../web/assets/workflows/'.$w_id.'/results.json'));
+        $res = json_decode(file_get_contents(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/results.json'));
         $result = array();
         foreach ($res as $key => $value) {
             $result[$key] = $value;
@@ -504,6 +550,7 @@ class DefaultController extends Controller
      */
     private function determineStage($stage) {
         $session = $this->get('session');
+        $max_stage_num = -1;
         $stage_num = -1;
 
         if (array_key_exists($stage, $this->stages)) {
@@ -512,24 +559,28 @@ class DefaultController extends Controller
 
         //
         if ($session->has('workflow') && $stage_num > 0) {
-            $workflow = $session->get('workflow');
+            $em = $this->getDoctrine()->getManager();
+            $workflow = $em->getRepository('ODEInteractiveBundle:Workflow')->find($session->get('workflow'));
+            if (array_key_exists($workflow->getMaxStage(), $this->stages)) {
+                $max_stage_num = $this->stages[$workflow->getMaxStage()];
+            }
 
-            if (!array_key_exists('dataset', $workflow) && $stage_num >= $this->stages["dataset"]) {
+            if (!$workflow->getDataset() && $stage_num >= $this->stages["dataset"] && $max_stage_num >= $this->stages["dataset"]) {
                 return 'dataset';
             }
-            else if (!array_key_exists('sampling', $workflow) && $stage_num >= $this->stages["sampling"]) {
-                return 'sampling';
-            }
-            else if (!array_key_exists('preprocessing', $workflow) && $stage_num >= $this->stages["preprocessing"]) {
+            else if ($workflow->getPreprocessing() === array() && $stage_num >= $this->stages["preprocessing"] && $max_stage_num >= $this->stages["preprocessing"]) {
                 return 'preprocessing';
             }
-            else if (!array_key_exists('reduction', $workflow) && $stage_num >= $this->stages["reduction"]) {
+            else if ($workflow->getReduction() === array() && $stage_num >= $this->stages["reduction"] && $max_stage_num >= $this->stages["reduction"]) {
                 return 'reduction';
             }
-            else if (!array_key_exists('model', $workflow) && $stage_num >= $this->stages["model"]) {
+            else if ($workflow->getSampling() === array() && $stage_num >= $this->stages["sampling"] && $max_stage_num >= $this->stages["sampling"]) {
+                return 'sampling';
+            }
+            else if (!$workflow->getModel() && $stage_num >= $this->stages["model"] && $max_stage_num >= $this->stages["model"]) {
                 return 'model';
             }
-            else if (!array_key_exists('parameterization', $workflow) && $stage_num >= $this->stages["parameterization"]) {
+            else if ($workflow->getParameterization() === array() && $stage_num >= $this->stages["parameterization"] && $max_stage_num >= $this->stages["parameterization"]) {
                 return 'parameterization';
             }
             else {
@@ -568,7 +619,7 @@ class DefaultController extends Controller
         }
 
         if ($stage_num <= $this->stages["preprocessing"] && $max_stage_num >= $this->stages["preprocessing"]) {
-            $script = 'run_preprocessing.py'
+            $script = 'run_preprocessing.py';
             $filename = $dataset->getFilename();
             $missing_data = $preprocessing['missing_data'];
             $script_args = "--dataset $filename.csv --workflow $w_id --missing-data $missing_data";
@@ -583,7 +634,7 @@ class DefaultController extends Controller
             }
 
             if ($preprocessing['binarization']) {
-                $b_thresh = $preprocessing['binarization_threshold']
+                $b_thresh = $preprocessing['binarization_threshold'];
                 $script_args .= " --binarization --binarization-threshold $b_thresh";
             }
 

@@ -20,11 +20,11 @@
         <div class="col-lg-10 col-lg-offset-1">
             <div class="ibox">
                 <div class="ibox-title">
-                    <h2>Dataset</h2>
+                    <h2>Workflows</h2>
                 </div>
                 <div class="ibox-content">
 
-                    <form id="form" action="/interactive/submit/dataset" method="POST" class="wizard-big">
+                    <form id="form" action="/interactive/submit/workflow" method="POST" class="wizard-big">
                         <section>
                             <h3>Select the workflow:</h3>
 
@@ -37,7 +37,7 @@
                                                 {% if current and workflow.id == current %}
                                                 <option value={{ workflow.id|e }} selected>{{ workflow.name|e }}</option>
                                                 {% else %}
-                                                <option value={{ workflow.id|e }}>{{ dataset.name|e }}</option>
+                                                <option value={{ workflow.id|e }}>{{ workflow.name|e }}</option>
                                                 {% endif %}
                                             {% endfor %}
                                         </select>
@@ -47,12 +47,12 @@
                                     <div id="new" class="form-group">
                                         <h3>Create a new workflow</h3>
                                         <label for="workflow">Workflow Name</label><br />
-                                        <input type="text" name="workflow" placeholder="Name the new workflow" />
+                                        <input type="text" name="name" placeholder="Name the new workflow" />
                                     </div>
                                     {% for workflow in workflows %}
                                     <div id="{{ workflow.id|e }}" class="workflow-desc">
                                         <h3>{{ workflow.name|e }}</h3>
-                                        <p>Created on {{ workflow.getCreatedOn().format('Y-m-d H:i:s') }}</p>
+                                        <p>Created on {{ workflow.getdate().format('Y-m-d H:i:s') }}</p>
                                     </div>
                                     {% endfor %}
                                 </div>

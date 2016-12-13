@@ -93,7 +93,16 @@ if __name__ == "__main__":
     outpath = os.path.join(workflow_path, args.workflow, dest)
 
     model = args.model
-    model_params = json.loads(args.model_params)
+    model_params = {}
+    with open(os.path.join(workflow_path, args.workflow, args.model_params), 'r') as f:
+        model_params = json.load(f)
+
+    if model == "decision_tree":
+        model_params["max_features"] = float(model_params["max_features"])
+        model_params["max_leaf_nodes"] = int(float(model_params["max_leaf_nodes"]))
+        model_params["min_samples_split"] = float(model_params["min_samples_split"])
+        model_params["min_samples_leaf"] = float(model_params["min_samples_leaf"])
+        model_params["max_depth"] = float(model_params["max_depth"])
 
     if model == "sgd" and "shuffle" in model_params:
         model_params["shuffle"] = bool(model_params["shuffle"])
@@ -208,5 +217,9 @@ if __name__ == "__main__":
         'runtime': stop - start
     }
 
-    with open(os.path.join(outpath, 'results.json'), 'w') as f:
-        json.dump(results, f)
+    if args.analysis:
+        with open(os.path.join(outpath, 'results.json'), 'w') as f:
+            json.dump(results, f)
+    else:
+        with open(os.path.join(outpath, 'parameterization', 'graph_data.json'), 'w') as f:
+            json.dump(results, f)

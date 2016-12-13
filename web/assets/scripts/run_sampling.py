@@ -6,6 +6,7 @@ import re
 import random
 import argparse
 import os
+import json
 
 from sklearn import preprocessing, decomposition, cross_validation
 from sklearn.neighbors import NearestNeighbors
@@ -157,7 +158,7 @@ if __name__ == "__main__":
 
     # Run under- and oversampling on each of the k folds
 
-    graph_data = []
+    graph_data = {}
 
     for train_index, test_index in skf:
         train_index = train_index[np.where(train_index < len(X))]
@@ -285,7 +286,7 @@ if __name__ == "__main__":
             fold_data['boxplot'].append(boxplot)
             fold_data['histogram'].append(histogram)
 
-        graph_data.append(fold_data)
+        graph_data["fold{}".format(i)] = fold_data
         i += 1
 
     stop = timeit.default_timer()
@@ -295,5 +296,5 @@ if __name__ == "__main__":
     if not os.path.isdir(outpath):
         os.mkdir(outpath)
 
-    with open(os.path.join(outpath, 'graph_data.json'), 'r') as f:
-        json_dump(graph_data, f)
+    with open(os.path.join(outpath, 'graph_data.json'), 'w') as f:
+        json.dump(graph_data, f)

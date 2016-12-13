@@ -8,6 +8,8 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 //use ODE\DatasetBundle\Form\UploadDataset;
 //use ODE\DatasetBundle\Entity\Dataset;
 use ODE\DatasetBundle\Entity\Dataset;
+use ODE\DatasetBundle\Entity\Keywords;
+use ODE\DatasetBundle\Entity\Citations;
 use ODE\DatasetBundle\Models\Document;
 
 class UploadController extends Controller
@@ -66,8 +68,21 @@ class UploadController extends Controller
                         $dataset->setFilesize($datafile->getClientSize());
                         $dataset->setFilename(implode('', array_slice($name_array, 0, -1)));
                         $dataset->setFile($document->getFile());
-
                         $em->persist($dataset);
+                        $em->flush();
+
+                        $keys = $request->get("keywords");
+                        $keywords = new Keywords();
+                        $keywords->setKeywords($keys);
+                        $keywords->setDataset($dataset);
+
+                        $refs = $request->get("citations");
+                        $citations = new Citations();
+                        $citations->setCitations($refs);
+                        $citations->setDataset($dataset);
+
+                        $em->persist($keywords);
+                        $em->persist($citations);
                         $em->flush();
 
                         $success = true;

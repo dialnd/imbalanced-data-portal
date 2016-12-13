@@ -86,8 +86,8 @@
 
                                     <span>norm:</span>
                                     <select disabled class="form-control required" id="norm" name="norm">
-                                        <option value="l1"> L1</option>
-                                        <option value="l2"> L2</option>
+                                        <option class="norm-opt" value="l1" selected> L1</option>
+                                        <option class="norm-opt" value="l2"> L2</option>
                                     </select>
                                 </div>
                                 <div class="col-lg-3">
@@ -145,7 +145,7 @@
 
             <div class="ibox">
                 <div class="ibox-title">
-                    <h2>Visualization</h2>
+                    <h2>Visualization<span id="runtime" class="label label-warning pull-right">Runtime</span></h2>
                 </div>
                 <div class="ibox-content" id="viz">
                     {% for i in 1..n_features %}
@@ -155,12 +155,6 @@
                             </div>
                             <div class="row">
                                 <div class="viz-col-histogram"></div>
-                            </div>
-                            <div class="row">
-                                <div class="viz-col-frequency"></div>
-                            </div>
-                            <div class="row">
-                                <div class="viz-col-odds"></div>
                             </div>
                         </div>
                     {% endfor %}
@@ -227,7 +221,7 @@
             inputs["missing_data"] = $('input[name="missing_data"]:checked').val();
             inputs["standardization"] = $('input[name="standardization"]:checked').val();
             inputs["normalization"] = $('input[name="normalization"]:checked').val();
-            inputs["norm_method"] = $('input[name="norm"]:selected').val();
+            inputs["norm"] = $('.norm-opt:selected').val();
             inputs["binarization"] = $('input[name="binarization"]:checked').val();
             inputs["binarization_threshold"] = $('input[name="binarization_threshold"]').val();
             inputs["outlier_detection"] = $('input[name="outlier_detection"]:checked').val();
@@ -240,6 +234,7 @@
                 success: function(data) {
                     outputs = data;
                     console.log(outputs);
+                    $("#runtime").text("Runtime = " + outputs['runtime'] + "s");
                     $('.viz-column').each(function(i, e) {
                         var $boxplot, $histogram;
                         $boxplot = $(e).find('.viz-col-boxplot')[0];

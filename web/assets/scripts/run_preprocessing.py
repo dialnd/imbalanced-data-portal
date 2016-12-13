@@ -21,16 +21,18 @@ class WorkflowExistsException(Exception):
     pass
 
 
+print(sys.argv)
+
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description="Perform preprocessing on a dataset")
 
-    parser.add_argument("--dataset",
+    parser.add_argument("-d", "--dataset",
                         help="dataset filename",
                         type=str,
                         required=True
                         )
 
-    parser.add_argument("--workflow",
+    parser.add_argument("-w", "--workflow",
                         help="workflow id",
                         type=str,
                         required=True
@@ -46,7 +48,7 @@ def parse_args(args=None):
                         help="pass to perform outlier detection",
                         type=str,
                         choices=["default", "average", "interpolation"],
-                        required=True
+                        default="default"
                         )
 
     parser.add_argument("--outlier-detection",
@@ -67,7 +69,8 @@ def parse_args(args=None):
     parser.add_argument("--norm-method",
                         help="normalization method",
                         type=str,
-                        choices=["l1", "l2"]
+                        choices=["l1", "l2"],
+                        default="l2"
                         )
 
     parser.add_argument("--binarization",
@@ -97,7 +100,7 @@ if __name__ == "__main__":
     dataset_path = os.path.abspath(os.path.join(args.current_dir, "..", "datasets"))
     workflow_path = os.path.abspath(os.path.join(args.current_dir, "..", "workflows"))
 
-    setup_workflow_dir(workflow_path, args.workflow)
+    #setup_workflow_dir(workflow_path, args.workflow)
     workflow_path = os.path.join(workflow_path, args.workflow)
     out_path = os.path.join(workflow_path, "preprocessing")
 

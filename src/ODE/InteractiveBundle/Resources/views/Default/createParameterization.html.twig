@@ -10,6 +10,7 @@
     'assets/css/plugins/dataTables/dataTables.tableTools.css'
     'assets/css/plugins/dataTables/dataTables.responsive.css'
     'assets/css/plugins/qTip/jquery.qtip.css'
+    'assets/css/interactive_styles.css'
     filter='cssrewrite' output='compiled/css/report.css' %}
     <link href="{{ asset_url }}" rel="stylesheet" type="text/css" />
     {% endstylesheets %}
@@ -37,7 +38,7 @@
                 </div>
                 <div class="ibox-content">
 
-                    <form id="form" action="/interactive/submit/parameterization" class="wizard-big">
+                    <form id="form" method="POST" action="/interactive/submit/parameterization" class="wizard-big">
                         <section>
 
                             {% if model.getName == 'Decision Tree' %}
@@ -816,13 +817,13 @@
                             {% endif %}
                         </section>
                         <div class="row" style="margin-top: 15px;">
-                            <div class="col-lg-3 col-lg-offset-2">
+                            <div class="col-lg-4 col-lg-offset-2">
                                 <a href="/interactive/model"><button class="btn btn-primary mt-2 mx-auto" id="prev-btn"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Model</button></a>
                             </div>
-                            <div class="col-lg-3">
+                            <!--<div class="col-lg-3">
                                 <button class="btn btn-default mt-2 mx-auto" id="update-btn">Update Plots</button>
-                            </div>
-                            <div class="col-lg-3">
+                            </div>-->
+                            <div class="col-lg-4">
                                 <button type="submit" class="btn btn-primary mt-2 mx-auto">Save and Continue<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
                             </div>
                         </div>
@@ -830,16 +831,42 @@
                 </div>
             </div>
 
-            <!-- <div class="ibox">
+
+            <!--<div class="ibox">
                 <div class="ibox-title">
-                    <h2>Visualization</h2>
+                    <h2>Visualization<span id="runtime" class="label label-warning pull-right">Runtime</span></h2>
                 </div>
                 <div class="ibox-content">
-
-
-
-                </div> -->
-            </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="ibox">
+                                <div class="ibox-title">
+                                    <span id="auroc" class="label label-primary pull-right">AUROC</span>
+                                    <h5>Receiver Operating Characteristic Curve</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div>
+                                        <div id="roc_curve" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="ibox">
+                                <div class="ibox-title">
+                                    <span id="aupr" class="label label-warning pull-right">AUPR</span>
+                                    <h5>Precision-Recall Curve</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div>
+                                        <div id="pr_curve" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>-->
         </div>
     </div>
 
@@ -875,6 +902,10 @@
     'assets/js/form_helpers.js' %}
     <script type="text/javascript" src="{{ asset_url }}"></script>
     {% endjavascripts %}
+
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
 
     {% if model.getName == 'Decision Tree' %}
         <script>
@@ -1855,7 +1886,181 @@
             });
             });
         </script>
+        {% endif %}
 
-    {% endif %}
+<script type="text/javascript">
+var roc, prc;
+
+roc = {
+        title: {
+            text: ''
+        },
+        xAxis: {
+            title: {
+                text: 'False positive rate'
+            },
+            min: 0,
+            max: 1,
+            tickInterval: 0.1
+        },
+        yAxis: {
+            title: {
+                text: 'True positive rate'
+            },
+            min: 0,
+            max: 1,
+            tickInterval: 0.1
+        },
+        legend: {
+            enabled: false
+        },
+        exporting: {
+            enabled: false
+        },
+        credits: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                    stops: [
+                        [0, '#59A595'],
+                        [1, Highcharts.Color('#59A595').setOpacity(0).get('rgba')]]
+                },
+                marker: {
+                    enabled: false
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+        tooltip:{
+            formatter:function(){
+                console.log(this);
+                return '<b>FPR: </b>' + this.key + '<br><b>TPR: </b>' + this.y;
+            }
+        },
+        series: []
+    };
+
+prc = {
+        title: {
+            text: ''
+        },
+        xAxis: {
+            title: {
+                text: 'Recall'
+            },
+            min: 0,
+            max: 1,
+            tickInterval: 0.1
+        },
+        yAxis: {
+            title: {
+                text: 'Precision'
+            },
+            min: 0,
+            max: 1,
+            tickInterval: 0.1
+        },
+        legend: {
+            enabled: false
+        },
+        exporting: {
+            enabled: false
+        },
+        credits: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                    stops: [
+                        [0, '#f8ac59'],
+                        [1, Highcharts.Color('#f8ac59').setOpacity(0).get('rgba')]
+                    ]
+                },
+                marker: {
+                    enabled: false
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+        tooltip:{
+            formatter:function(){
+                console.log(this);
+                return '<b>Recall: </b>' + this.key + '<br><b>Precision: </b>' + this.y;
+            }
+        },
+        series: []
+    };
+
+    $(function(){
+        $('#update-btn').on("click", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var $target, inputs, outputs;
+            inputs = $("#form").serialize();
+            outputs = {};
+
+            $target = $(e.target);
+            $target.prop("disabled", true);
+            $.ajax({
+                url: "/interactive/update/parameterization",
+                method: "GET",
+                dataType: "application/json",
+                data: inputs,
+                success: function(response) {
+                    roc["series"] = [{
+                        type: 'area',
+                        color: '#127e68',
+                        data: [
+                            response["roc_points"]
+                        ]
+                    }];
+
+                    prc["series"] = [{
+                        type: 'area',
+                        color: '#B68651',
+                        data: [
+                            response["prc_points"]
+                        ]
+                    }];
+
+                    $('#roc_curve').highcharts(roc);
+                    $('#pr_curve').highcharts(prc);
+
+                    $("#auroc").val("AUROC = " + response["auroc"]);
+                    $("#aupr").val("AUPR = " + response["aupr"]);
+                },
+                error: function(xhr, status, error) {
+                    outputs = {errormsg: "An error occurred while processing the request "};
+                    console.log(outputs);
+                    console.log(status, error);
+                },
+                complete: function() {
+                    $target.prop("disabled", false);
+                }
+            });
+
+            return false;
+        });
+    });
+
+</script>
 
 {% endblock %}

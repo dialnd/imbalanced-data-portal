@@ -114,10 +114,25 @@
 
             <div class="ibox">
                 <div class="ibox-title">
-                    <h2>Visualization</h2>
+                    <h2>Visualization<span id="runtime" class="label label-warning pull-right">Runtime</span></h2>
                 </div>
                 <div class="ibox-content">
-
+                    {% for j in 0..9 %}
+                        <div id="fold{{ j }}" class="row">
+                        <h1>Fold {{ j + 1 }}</h1>
+                        {% for i in 1..n_features %}
+                            <div class="viz-column col-lg-4">
+                                <div class="row">
+                                    <div class="viz-col-boxplot"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="viz-col-histogram"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                        <div class="hr-line-dashed"></div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -154,5 +169,70 @@
     'assets/js/form_helpers.js' %}
     <script type="text/javascript" src="{{ asset_url }}"></script>
     {% endjavascripts %}
+
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+    <script type="text/javascript">
+    $(function() {
+
+        $("#update-btn").on("click", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var $target, inputs, outputs;
+            inputs = {};
+            outputs = {};
+
+            $target = $(e.target);
+            $target.prop("disabled", true);
+
+            inputs["undersampling"] = $('input[name="undersampling"]:checked').val();
+            inputs["oversampling"] = $('input[name="oversampling"]:checked').val();
+            inputs["undersampling_rate"] = $('input[name="undersampling_rate"]:checked').val();
+            inputs["oversampling_percentage"] = $('input[name="oversampling_percentage"]:selected').val();
+
+            $.ajax({
+                url: "/interactive/update/sampling",
+                method: "GET",
+                data: inputs,
+                contentType: "application/json",
+                success: function(data) {
+                    var $fold;
+                    outputs = data;
+                    console.log(outputs);
+                    $("#runtime").text("Runtime = " + outputs['runtime'] + "s");
+                    for (var fold in outputs) {
+                        if (outputs.hasOwnProperty(fold)) {
+                            console.log(fold);
+                            $fold = $("#" + fold);
+                            $fold.find('.viz-column').each(function(i, e) {
+                                var $boxplot, $histogram;
+                                $boxplot = $(e).find('.viz-col-boxplot')[0];
+                                $histogram = $(e).find('.viz-col-histogram')[0];
+
+                                outputs[fold]['boxplot'][i]['chart']['renderTo'] = $boxplot;
+                                outputs[fold]['histogram'][i]['chart']['renderTo'] = $histogram;
+                                box = Highcharts.chart(outputs[fold]['boxplot'][i]);
+                                hist = Highcharts.chart(outputs[fold]['histogram'][i]);
+                            });
+                        }
+                    }
+                },
+                error: function(xhr, status, error) {
+                    outputs = {errormsg: "An error occurred while processing the request "};
+                    console.log(outputs);
+                    console.log(status, error);
+                },
+                complete: function() {
+                    $target.prop("disabled", false);
+                }
+            });
+
+            return false;
+        });
+    });
+    </script>
 
 {% endblock %}

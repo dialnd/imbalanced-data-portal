@@ -29,11 +29,10 @@ class Citations
     private $citations;
 
     /**
-     * @var integer
-     *
-     * @ORM\Column(name="dataset_id", type="integer")
+     * @ORM\ManyToOne(targetEntity="ODE\DatasetBundle\Entity\Dataset", inversedBy="keywords")
+     * @ORM\JoinColumn(name="dataset_id", referencedColumnName="id")
      */
-    private $datasetId;
+    private $dataset;
 
 
     /**
@@ -69,26 +68,16 @@ class Citations
         return $this->citations;
     }
 
-    /**
-     * Set datasetId
-     *
-     * @param integer $datasetId
-     * @return Keywords
-     */
-    public function setDatasetId($datasetId)
+
+    public function setDataset($dataset)
     {
-        $this->datasetId = $datasetId;
+        $this->dataset = $dataset;
 
         return $this;
     }
 
-    /**
-     * Get datasetId
-     *
-     * @return integer
-     */
-    public function getDatasetId()
+    public function getDataset()
     {
-        return $this->datasetId;
+        return $this->dataset;
     }
 }

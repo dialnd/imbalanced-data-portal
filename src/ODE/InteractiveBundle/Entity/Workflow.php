@@ -96,6 +96,11 @@ class Workflow
     private $maxStage;
 
 
+    public function doStuffOnPrePersist()
+    {
+        $this->date = date('Y-m-d H:i:s');
+    }
+
     /**
      * Get id
      *

@@ -6,6 +6,10 @@ ode_workflow_page:
     path:     /interactive/stage/workflow
     defaults: { _controller: ODEInteractiveBundle:Default:createWorkflow }
 
+ode_workflow_submit:
+    path:     /interactive/submit/workflow
+    defaults: { _controller: ODEInteractiveBundle:Default:submitWorkflow }
+
 ode_dataset_page:
     path:     /interactive/stage/dataset
     defaults: { _controller: ODEInteractiveBundle:Default:createDataset }
@@ -20,7 +24,7 @@ ode_sampling_page:
 
 ode_sampling_update:
     path:     /interactive/update/sampling
-    defaults: { _controller: ODEInteractiveBundle:Default:updateSamping }
+    defaults: { _controller: ODEInteractiveBundle:Default:updateSampling }
 
 ode_sampling_submit:
     path:     /interactive/submit/sampling

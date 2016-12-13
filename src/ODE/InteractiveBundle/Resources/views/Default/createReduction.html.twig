@@ -76,7 +76,7 @@
 
             <div class="ibox">
                 <div class="ibox-title">
-                    <h2>Visualization</h2>
+                    <h2>Visualization<span id="runtime" class="label label-warning pull-right">Runtime</span></h2>
                 </div>
                 <div class="ibox-content">
                     <div class="viz-column col-lg-12">
@@ -154,6 +154,7 @@
                 success: function(data) {
                     outputs = data;
                     console.log(outputs);
+                    $("#runtime").text("Runtime = " + outputs['runtime'] + "s");
                     $('.viz-column').each(function(i, e) {
                         var $scree, $scatter;
                         $scree = $('.viz-col-scree')[0];

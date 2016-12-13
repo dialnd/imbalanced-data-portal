@@ -17,7 +17,7 @@ from sklearn import decomposition
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description="Perform preprocessing on a dataset")
 
-    parser.add_argument("--workflow",
+    parser.add_argument("-w", "--workflow",
                         help="workflow id",
                         type=str,
                         required=True
@@ -36,8 +36,8 @@ def parse_args(args=None):
 
     parser.add_argument("-n", "--n-components",
                         help="number of principal components",
-                        type=int,
-                        default=5
+                        type=float,
+                        default=5.00
                         )
 
     return parser.parse_args(args)
@@ -51,21 +51,30 @@ if __name__ == "__main__":
     workflow_path = os.path.join(args.current_dir, "..", "workflows", args.workflow)
 
     X = pd.read_csv(os.path.join(workflow_path, "preprocessing", "data.csv")).values
-
+    temp = None
     var_ratio = None
 
     if not args.reduce or args.n_components > len(X[0]):
         args.n_components = len(X[0])
 
     # Apply PCA
-    estimator = decomposition.PCA(n_components=args.n_components)
-    X = estimator.fit_transform(X)
-    var_ratio = list(estimator.explained_variance_ratio_)
+    if args.reduce:
+        estimator = decomposition.PCA(n_components=int(args.n_components))
+        X = estimator.fit_transform(X)
+        var_ratio = list(estimator.explained_variance_ratio_)
+    else:
+        estimator = decomposition.PCA(n_components=len(X[0]))
+        temp = estimator.fit_transform(X)
+        var_ratio = list(estimator.explained_variance_ratio_)
+
 
     out_path = os.path.join(workflow_path, "reduction")
     if not os.path.isdir(out_path):
         os.mkdir(out_path)
     np.savetxt(os.path.join(out_path, "data.csv"), X)
+
+    if temp is not None:
+        X = temp
 
     graph_data = {
         "scree": {},
@@ -163,6 +172,7 @@ if __name__ == "__main__":
 
     stop = timeit.default_timer()
     graph_data["runtime"] = stop - start
+    graph_data["commands"] = sys.argv
 
     with open(os.path.join(out_path, 'graph_data.json'), 'w') as f:
         json.dump(graph_data, f)
