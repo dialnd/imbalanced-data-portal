@@ -1,0 +1,79 @@
+ode_interactive_homepage:
+    path:     /interactive/{stage}
+    defaults: { _controller: ODEInteractiveBundle:Default:index }
+
+ode_workflow_page:
+    path:     /interactive/stage/workflow
+    defaults: { _controller: ODEInteractiveBundle:Default:createWorkflow }
+
+ode_workflow_submit:
+    path:     /interactive/submit/workflow
+    defaults: { _controller: ODEInteractiveBundle:Default:submitWorkflow }
+
+ode_dataset_page:
+    path:     /interactive/stage/dataset
+    defaults: { _controller: ODEInteractiveBundle:Default:createDataset }
+
+ode_dataset_submit:
+    path:     /interactive/submit/dataset
+    defaults: { _controller: ODEInteractiveBundle:Default:submitDataset }
+
+ode_sampling_page:
+    path:     /interactive/stage/sampling
+    defaults: { _controller: ODEInteractiveBundle:Default:createSampling }
+
+ode_sampling_update:
+    path:     /interactive/update/sampling
+    defaults: { _controller: ODEInteractiveBundle:Default:updateSampling }
+
+ode_sampling_submit:
+    path:     /interactive/submit/sampling
+    defaults: { _controller: ODEInteractiveBundle:Default:submitSampling }
+
+ode_preprocessing_page:
+    path:     /interactive/stage/preprocessing
+    defaults: { _controller: ODEInteractiveBundle:Default:createPreprocessing }
+
+ode_preprocessing_update:
+    path:     /interactive/update/preprocessing
+    defaults: { _controller: ODEInteractiveBundle:Default:updatePreprocessing }
+
+ode_preprocessing_submit:
+    path:     /interactive/submit/preprocessing
+    defaults: { _controller: ODEInteractiveBundle:Default:submitPreprocessing }
+
+ode_reduction_page:
+    path:     /interactive/stage/reduction
+    defaults: { _controller: ODEInteractiveBundle:Default:createReduction }
+
+ode_reduction_update:
+    path:     /interactive/update/reduction
+    defaults: { _controller: ODEInteractiveBundle:Default:updateReduction }
+
+ode_reduction_submit:
+    path:     /interactive/submit/reduction
+    defaults: { _controller: ODEInteractiveBundle:Default:submitReduction }
+
+ode_model_page:
+    path:     /interactive/stage/model
+    defaults: { _controller: ODEInteractiveBundle:Default:createModel }
+
+ode_model_submit:
+    path:     /interactive/submit/model
+    defaults: { _controller: ODEInteractiveBundle:Default:submitModel }
+
+ode_parameterization_page:
+    path:     /interactive/stage/parameterization
+    defaults: { _controller: ODEInteractiveBundle:Default:createParameterization }
+
+ode_parameteriztion_update:
+    path:     /interactive/update/parameterization
+    defaults: { _controller: ODEInteractiveBundle:Default:updateParameterization }
+
+ode_parameterization_submit:
+    path:     /interactive/submit/parameterization
+    defaults: { _controller: ODEInteractiveBundle:Default:submitParameterization }
+
+ode_results_page:
+    path:     /interactive/stage/results
+    defaults: { _controller: ODEInteractiveBundle:Default:createAnalysis }

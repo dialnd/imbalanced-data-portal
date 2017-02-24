@@ -1,0 +1,117 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets
+    'assets/css/plugins/iCheck/custom.css'
+    'assets/css/plugins/steps/jquery.steps.css'
+    'assets/css/plugins/noUiSlider/jquery.nouislider.css'
+    'assets/css/interactive_styles.css'
+    'assets/css/plugins/qTip/jquery.qtip.css' filter='cssrewrite' output='compiled/css/create-analysis.css' %}
+    <link href="{{ asset_url }}" rel="stylesheet" type="text/css" />
+    {% endstylesheets %}
+{% endblock %}
+
+{% block body %}
+
+{% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+    <br><br>
+    <div class="row">
+        <div class="col-lg-10 col-lg-offset-1">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h2>Workflows</h2>
+                </div>
+                <div class="ibox-content">
+
+                    <form id="form" action="/interactive/submit/workflow" method="POST" class="wizard-big">
+                        <section>
+                            <h3>Select the workflow:</h3>
+
+                            <div class="row">
+                                <div class="col-lg-5">
+                                    <div class="form-group">
+                                        <select id="workflow" name="workflow" class="form-control required">
+                                            <option value="new" selected>Create a New Workflow</option>
+                                            {% for workflow in workflows %}
+                                                {% if current and workflow.id == current %}
+                                                <option value={{ workflow.id|e }} selected>{{ workflow.name|e }}</option>
+                                                {% else %}
+                                                <option value={{ workflow.id|e }}>{{ workflow.name|e }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="workflow-description" class="col-lg-5 col-lg-offset-1">
+                                    <div id="new" class="form-group">
+                                        <h3>Create a new workflow</h3>
+                                        <label for="workflow">Workflow Name</label><br />
+                                        <input type="text" name="name" placeholder="Name the new workflow" />
+                                    </div>
+                                    {% for workflow in workflows %}
+                                    <div id="{{ workflow.id|e }}" class="workflow-desc">
+                                        <h3>{{ workflow.name|e }}</h3>
+                                        <p>Created on {{ workflow.getdate().format('Y-m-d H:i:s') }}</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </section>
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-lg-4 col-lg-offset-8">
+                                <button class="btn btn-primary mt-2 mx-auto" type="submit">Save and Continue<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="wrapper wrapper-content animated fadeIn">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content text-center p-md">
+                        <h2><span>Sorry! You must be logged in to access this area.</span></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row text-center">
+            <a href="/login" class="btn btn-default btn-sm"><span class="fa fa-sign-in"></span>&nbsp;&nbsp;Login</a>
+            <a href="/register" class="btn btn-default btn-sm"><span class="fa fa-user-plus"></span>&nbsp;&nbsp;Register</a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+    {{ parent() }}
+    {% javascripts
+    'assets/js/plugins/steps/jquery.steps.js'
+    'assets/js/plugins/validate/jquery.validate.min.js'
+    'assets/js/plugins/noUiSlider/jquery.nouislider.all.js'
+    'assets/js/plugins/qTip/jquery.qtip.js'
+    'assets/js/plugins/iCheck/icheck.js' output='compiled/js/create-analysis.js'
+    'assets/js/form_helpers.js' %}
+    <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+
+    <script type="text/javascript">
+        $(function() {
+            $("#workflow").on("change", function(e) {
+                var $selected, sid;
+                $selected = $("option:selected");
+                sid = "#" + $selected.val();
+                $("#workflow-description").children().hide();
+                $(sid).show();
+            });
+        });
+    </script>
+
+{% endblock %}

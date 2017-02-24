@@ -1,0 +1,264 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets
+    'assets/css/plugins/iCheck/custom.css'
+    'assets/css/plugins/steps/jquery.steps.css'
+    'assets/css/plugins/noUiSlider/jquery.nouislider.css'
+    'assets/css/plugins/qTip/jquery.qtip.css' filter='cssrewrite' output='compiled/css/create-analysis.css'
+    'assets/css/interactive_styles.css' %}
+    <link href="{{ asset_url }}" rel="stylesheet" type="text/css" />
+    {% endstylesheets %}
+{% endblock %}
+
+{% block body %}
+
+{% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+    <br><br>
+    <div class="row">
+        <div class="col-lg-10 col-lg-offset-1">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h2>Preprocessing</h2>
+                    <ul class="nav nav-pills">
+                        <li role="presentation"><a href="/interactive/workflow">Workflow</a></li>
+                        <li role="presentation"><a href="/interactive/dataset">Dataset</a></li>
+                        <li role="presentation" class="active"><a href="/interactive/preprocessing">Preprocessing</a></li>
+                        <li role="presentation"><a href="/interactive/reduction">Reduction</a></li>
+                        <li role="presentation"><a href="/interactive/sampling">Sampling</a></li>
+                        <li role="presentation"><a href="/interactive/model">Model</a></li>
+                        <li role="presentation"><a href="/interactive/parameterization">Parameterization</a></li>
+                        <li role="presentation"><a href="/interactive/result">Result</a></li>
+                    </ul>
+                </div>
+                <div class="ibox-content">
+
+                    <form id="form" action="/interactive/submit/preprocessing" method="POST" class="wizard-big">
+                        <h3>Clean the data:</h3>
+                        <section>
+                            <div class="row">
+                                <div class="col-lg-3 col-lg-offset-3">
+                                    <label>Missing data handling: <i
+                                                class="fa fa-question-circle parameter_value_off"
+                                                id="q3"></i></label>
+
+                                    <div class="radio i-checks">
+                                        <label><input class="required" name="missing_data" type="radio"
+                                                      value="average"> Impute with average </label>
+                                        <br>
+                                        <label><input class="required" name="missing_data" type="radio"
+                                                      value="interpolation"> Perform linear interpolation </label>
+                                        <br>
+                                        <label><input checked class="required" name="missing_data" type="radio"
+                                                      value="default"> Impute with <i>-1</i> </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <label>Standardization: <i class="fa fa-question-circle parameter_value_off"
+                                                               id="q5"></i></label>
+
+                                    <div class="radio i-checks">
+                                        <label><input class="required" name="standardization" type="radio"
+                                                      value="1"> True </label>
+                                        <br>
+                                        <label><input checked class="required" name="standardization" type="radio"
+                                                      value="0"> False </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="hr-line-dashed"></div>
+
+                            <div class="row" style="margin-top: 15px;">
+                                <div class="col-lg-3 col-lg-offset-2">
+                                    <label>Normalization: <i class="fa fa-question-circle parameter_value_off"
+                                                             id="q6"></i></label>
+
+                                    <div class="radio i-checks">
+                                        <label><input class="required" name="normalization" type="radio" value="1">
+                                            True </label>
+                                        <br>
+                                        <label><input checked class="required" name="normalization" type="radio"
+                                                      value="0"> False </label>
+                                    </div>
+
+                                    <span>norm:</span>
+                                    <select disabled class="form-control required" id="norm" name="norm">
+                                        <option class="norm-opt" value="l1" selected> L1</option>
+                                        <option class="norm-opt" value="l2"> L2</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-3">
+                                    <label>Binarization: <i class="fa fa-question-circle parameter_value_off"
+                                                            id="q7"></i></label>
+
+                                    <div class="radio i-checks">
+                                        <label><input class="required" name="binarization" type="radio" value="1">
+                                            True </label>
+                                        <br>
+                                        <label><input checked class="required" name="binarization" type="radio"
+                                                      value="0"> False </label>
+                                    </div>
+
+                                    <div class="row text-center">
+                                        <label>Threshold = <span class="example-val parameter_value_off"
+                                                                 id="binarization_threshold-value"></span></label>
+
+                                        <div class="col-lg-10 col-lg-offset-1">
+                                            <div id="binarization-slider"></div>
+                                            <input id="binarization_threshold" name="binarization_threshold"
+                                                   type="hidden" value="">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <label>Outlier Detection: <i class="fa fa-question-circle parameter_value_off"
+                                                                 id="q8"></i></label>
+
+                                    <div class="radio i-checks">
+                                        <label><input class="required" name="outlier_detection" type="radio"
+                                                      value="1"> True </label>
+                                        <br>
+                                        <label><input checked class="required" name="outlier_detection" type="radio"
+                                                      value="0"> False </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hr-line-dashed"></div>
+                        </section>
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-lg-3 col-lg-offset-2">
+                                <a href="/interactive/dataset"><button class="btn btn-primary mt-2 mx-auto" id="prev-btn"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Dataset</button></a>
+                            </div>
+                            <div class="col-lg-3">
+                                <button class="btn btn-default mt-2 mx-auto" id="update-btn">Update Plots</button>
+                            </div>
+                            <div class="col-lg-3">
+                                <button type="submit" class="btn btn-primary mt-2 mx-auto">Save and Continue<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h2>Visualization<span id="runtime" class="label label-warning pull-right">Runtime</span></h2>
+                </div>
+                <div class="ibox-content" id="viz">
+                    {% for i in 1..n_features %}
+                        <div class="viz-column col-lg-4">
+                            <div class="row">
+                                <div class="viz-col-boxplot"></div>
+                            </div>
+                            <div class="row">
+                                <div class="viz-col-histogram"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="wrapper wrapper-content animated fadeIn">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content text-center p-md">
+                        <h2><span>Sorry! You must be logged in to access this area.</span></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row text-center">
+            <a href="/login" class="btn btn-default btn-sm"><span class="fa fa-sign-in"></span>&nbsp;&nbsp;Login</a>
+            <a href="/register" class="btn btn-default btn-sm"><span class="fa fa-user-plus"></span>&nbsp;&nbsp;Register</a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+    {{ parent() }}
+    {% javascripts
+    'assets/js/plugins/steps/jquery.steps.js'
+    'assets/js/plugins/validate/jquery.validate.min.js'
+    'assets/js/plugins/noUiSlider/jquery.nouislider.all.js'
+    'assets/js/plugins/qTip/jquery.qtip.js'
+    'assets/js/plugins/iCheck/icheck.js' output='compiled/js/create-analysis.js'
+    'assets/js/form_helpers.js' %}
+    <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+    <script type="text/javascript">
+    $(function() {
+        var charts
+        charts = {
+            boxplot: [],
+            histogram: []
+        };
+        $("#update-btn").on("click", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var $target, inputs, outputs;
+            inputs = {};
+            outputs = {};
+
+            $target = $(e.target);
+            $target.prop("disabled", true);
+
+            inputs["missing_data"] = $('input[name="missing_data"]:checked').val();
+            inputs["standardization"] = $('input[name="standardization"]:checked').val();
+            inputs["normalization"] = $('input[name="normalization"]:checked').val();
+            inputs["norm"] = $('.norm-opt:selected').val();
+            inputs["binarization"] = $('input[name="binarization"]:checked').val();
+            inputs["binarization_threshold"] = $('input[name="binarization_threshold"]').val();
+            inputs["outlier_detection"] = $('input[name="outlier_detection"]:checked').val();
+
+            $.ajax({
+                url: "/interactive/update/preprocessing",
+                method: "GET",
+                data: inputs,
+                contentType: "application/json",
+                success: function(data) {
+                    outputs = data;
+                    console.log(outputs);
+                    $("#runtime").text("Runtime = " + outputs['runtime'] + "s");
+                    $('.viz-column').each(function(i, e) {
+                        var $boxplot, $histogram;
+                        $boxplot = $(e).find('.viz-col-boxplot')[0];
+                        $histogram = $(e).find('.viz-col-histogram')[0];
+
+                        outputs['boxplot'][i]['chart']['renderTo'] = $boxplot;
+                        outputs['histogram'][i]['chart']['renderTo'] = $histogram;
+                        box = Highcharts.chart(outputs['boxplot'][i]);
+                        hist = Highcharts.chart(outputs['histogram'][i]);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    outputs = {errormsg: "An error occurred while processing the request "};
+                    console.log(outputs);
+                    console.log(status, error);
+                },
+                complete: function() {
+                    $target.prop("disabled", false);
+                }
+            });
+
+            return false;
+        });
+    });
+    </script>
+
+{% endblock %}
