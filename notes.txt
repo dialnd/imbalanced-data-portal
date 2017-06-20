@@ -1,3 +1,7 @@
+To install dependencies:
+php composer.phar install
+
+
 To run the app:
 ----------------------------------------------------------------------
 php app/console server:run
