@@ -1,4 +1,5 @@
 To install dependencies:
+----------------------------------------------------------------------
 php composer.phar install
 
 
