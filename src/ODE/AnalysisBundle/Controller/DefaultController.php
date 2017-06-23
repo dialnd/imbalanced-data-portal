@@ -14,15 +14,16 @@ class DefaultController extends Controller
         $model_id = $request->query->get('model');
         $dataset_id = $request->query->get('dataset');
 
-        // Retrieve all GET parameters and remove from the list some that are going to be saved on a different column in the table
+        // Retrieve all GET parameters.
+        // Remove those GET parameters that will be saved in a different table column.
         $params = $request->query->all();
-        unset($params['dataset'],$params['model'],$params['acceptTerms']);
+        unset($params['dataset'], $params['model'], $params['acceptTerms']);
 
         $em = $this->getDoctrine()->getManager();
         $model = $em->getRepository('ODEAnalysisBundle:Model')->find($model_id);
         $dataset = $em->getRepository('ODEDatasetBundle:Dataset')->find($dataset_id);
 
-        // Retrieve from model table a mapping parameter->parameter_type
+        // Retrieve from model table a mapping of parameter->parameter_type.
         $model_params = $model->getParameters();
         $preprocessing_params_types = array(
             'undersampling' => 'bool',
@@ -57,12 +58,12 @@ class DefaultController extends Controller
             }
         }
 
-        // Check to see if parameter list is empty (e.g., Naive Bayes)
-        // If so, pass an empty object to represent that
+        // Check if parameter list is empty (e.g., Naive Bayes).
+        // If parameter list is empty, pass an empty object.
         if (!count((array)$params)){
             $params =  (object) null;
         }
-        // Convert string values from GET to actual numbers so that python script won't freak out
+        // Convert string values from GET to actual numbers (for Python script).
         else{
             foreach (array_keys($params) as $param){
                 if ($model_params[$param] == 'int'){
@@ -75,7 +76,7 @@ class DefaultController extends Controller
             }
         }
 
-        // Create an entry with that data in the ode_results table
+        // Create an entry with the analysis result data in the ode_results table.
         $result = new Result();
         $result->setUser($this->getUser());
         $result->setModel($model);
@@ -87,23 +88,23 @@ class DefaultController extends Controller
         $em->persist($result);
         $em->flush();
 
-        // Once all parameters for the experiment are stored, call python script to actually run it
+        // Once all parameters for the experiment have been stored, call Python script to run it.
         $this->runAnalysis($result->getId());
 
-        // Once script is called, redirect user to "waiting" page
-        return $this->redirect($this->generateUrl('ode_wait_result', array('id' => $result->getId()),true));
+        // Once the Python script is called, redirect user to the "waiting" page.
+        return $this->redirect($this->generateUrl('ode_wait_result', array('id' => $result->getId()), true));
     }
 
     private function runAnalysis($id){
-        // Python script needs to know the "current_dir" to open data files
+        // Python script needs the "current_dir" from which to open data files.
         $script = __DIR__.'/../../../../web/assets/scripts/run_analysis.py';
         $current_dir = __DIR__.'/../../../../web/assets/scripts/';
 
-        // To prevent blocking, use the code below when running the python script
-        // Note that windows doesn't like '&' so we use pclose() for the time being
-        // TODO: Edit this code when deploying to production server
-        if (substr(php_uname(), 0, 7) == "Windows"){
-            $terminal_output = pclose(popen('start /B python '.$script.' '.$id.' '.$current_dir, "r"));
+        // To prevent blocking, use the code below when running the Python script.
+        // Note that Windows doesn't like the '&' symbol, so we use pclose().
+        // TODO: Edit this code prior to deploying to production server.
+        if (substr(php_uname(), 0, 7) == 'Windows'){
+            $terminal_output = pclose(popen('start /B python '.$script.' '.$id.' '.$current_dir, 'r'));
         }  else {
             $terminal_output = exec('python '.$script.' '.$id.' '.$current_dir.' &');
         }
@@ -117,7 +118,7 @@ class DefaultController extends Controller
         $em = $this->getDoctrine()->getManager();
         $result = $em->getRepository('ODEAnalysisBundle:Result')->find($result_id);
 
-        // Return 0 or 1 from database indicating whether or not analysis finished running
+        // Return 0 or 1 from the database, indicating whether the analysis has or has not completed, respectively.
         return new Response(json_encode(array('finished'=>$result->getFinished())));
     }
 
@@ -128,9 +129,10 @@ class DefaultController extends Controller
 
         $report_data = $result->getReport_data();
 
-        // Get the rank for the current execution based on all accuracies previously obtained for the same dataset
-        // TODO: Change this syntax to the safer http://doctrine-orm.readthedocs.org/en/latest/reference/native-sql.html
-        $query = "SELECT count(*)+1 as rank from (select accuracy from ode_results WHERE dataset_id=".$result->getDataset()->getID()." group by accuracy) as A WHERE A.accuracy > ".$result->getAccuracy();
+        // Return the rank for the current execution based on all accuracies previously obtained for the same dataset.
+        // TODO: Change this syntax to safer: http://doctrine-orm.readthedocs.org/en/latest/reference/native-sql.html
+        //$query = "SELECT count(*)+1 AS rank FROM (SELECT accuracy FROM ode_results WHERE dataset_id=".$result->getDataset()->getID()." GROUP BY accuracy) AS a WHERE a.accuracy > ".$result->getAccuracy();
+        $query = "SELECT COUNT(*)+1 AS rank FROM ode_results WHERE dataset_id=".$result->getDataset()->getID();
         $connection = $em->getConnection()->query($query);
         $connection->execute();
         $rank = $connection->fetchAll()[0]['rank'];
@@ -141,13 +143,13 @@ class DefaultController extends Controller
                 'aupr' => $result->getAupr(),
                 'roc_points' => $report_data['roc_points'],
                 'prc_points' => $report_data['prc_points'],
-                'confusion_matrix' => explode(",",$report_data['confusion_matrix']),
-                'classification_report' => explode(",",$report_data['classification_report']),
-                'indexes' => explode(",",$report_data['indexes']),
-                'y_original_values' => explode(",",$report_data['y_original_values']),
-                'y_pred' => explode(",",$report_data['y_pred']),
-                'errors' => explode(",",$report_data['errors']),
-                'y_prob' => explode(",",$report_data['y_prob']),
+                'confusion_matrix' => explode(",", $report_data['confusion_matrix']),
+                'classification_report' => explode(",", $report_data['classification_report']),
+                'indexes' => explode(",", $report_data['indexes']),
+                'y_original_values' => explode(",", $report_data['y_original_values']),
+                'y_pred' => explode(",", $report_data['y_pred']),
+                'errors' => explode(",", $report_data['errors']),
+                'y_prob' => explode(",", $report_data['y_prob']),
                 'model' => $em->getRepository('ODEAnalysisBundle:Model')->find($result->getModel())->getName(),
                 'dataset_name' => $result->getDataset()->getName(),
                 'runtime' => $result->getRuntime(),

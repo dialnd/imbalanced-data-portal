@@ -51,6 +51,7 @@ Installing xdebug
 ----------------------------------------------------------------------
 http://xdebug.org/wizard.php
 
+
 To run the app in prod:
 ----------------------------------------------------------------------
 php app/console cache:clear --env=prod & php app/console assetic:dump --env=prod --no-debug & php app/console server:run --env=prod --no-debug
