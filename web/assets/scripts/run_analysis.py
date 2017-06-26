@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 import random
 import re
 import sys
@@ -17,8 +18,9 @@ import pymysql
 
 start = timeit.default_timer()
 
-analysisID = sys.argv[1]
-currentDir = sys.argv[2]
+analysis_id = sys.argv[1]
+#current_dir = sys.argv[2]
+current_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Connect to the database.
 db = pymysql.connect(host='localhost', user='root', passwd='', db='symfony')
@@ -26,8 +28,9 @@ cursor = db.cursor()
 
 # Find the current analysis object in the results database.
 cursor.execute(
-    "SELECT dataset_id, preprocessing_params, params, model_id FROM ode_results WHERE id=" + analysisID)
+    "SELECT dataset_id, preprocessing_params, params, model_id FROM ode_results WHERE id=" + analysis_id)
 analysis = cursor.fetchone()
+print(analysis)
 
 # Find the dataset to be used by the current analysis.
 cursor.execute("SELECT * FROM ode_dataset WHERE id=" + str(analysis[0]))
@@ -37,8 +40,6 @@ dataset = cursor.fetchone()
 #################################
 # Data Pre-processing Functions #
 #################################
-
-from sklearn.neighbors import NearestNeighbors
 
 preprocessing_params = json.loads(analysis[1])
 
@@ -95,6 +96,8 @@ def SMOTE(T, N, k, h=1.0):
     S : Synthetic samples. array,
         shape = [(N/100) * n_minority_samples, n_features].
     """
+    from sklearn.neighbors import NearestNeighbors
+
     n_minority_samples, n_features = T.shape
 
     if N < 100:
@@ -134,12 +137,13 @@ def SMOTE(T, N, k, h=1.0):
 ########################################
 
 from scipy import stats
-from sklearn import preprocessing, decomposition
+from sklearn import decomposition, preprocessing
 
-df = pd.read_csv(currentDir + '../datasets/' + dataset[7] + '.csv')
+df = pd.read_csv(os.path.join(os.path.dirname(current_dir), 
+                 'datasets', str(dataset[8]) + '.csv'))
+X = df.drop(df.columns[df.shape[1] - 1], axis=1)
 y = preprocessing.LabelEncoder().fit_transform(
     df.iloc[:, df.shape[1] - 1].values)
-X = df.drop(df.columns[df.shape[1] - 1], axis=1)
 
 # Fill in missing values.
 if (preprocessing_params['missing_data'] == 'default'):
@@ -149,12 +153,12 @@ elif(preprocessing_params['missing_data'] == 'average'):
 elif (preprocessing_params['missing_data'] == 'interpolation'):
     X = X.interpolate()
 
-s = ' + '.join(X.columns) + ' -1'
-# Note: The encoding below could create very large dataframes for datasets
+#s = ' + '.join(X.columns) + ' -1'
+# Note: The encoding below could create very large dataframes for datasets.
 # with many categorical features.
-X = patsy.dmatrix(s, X, return_type='dataframe').values
+#X = patsy.dmatrix(s, X, return_type='dataframe').values
 
-# Remove outliers
+# Remove outliers.
 # TODO: Move this to traning step of K-fold so as to keep test untouched?
 if preprocessing_params['outlier_detection']:
     non_outlier_idx = (np.abs(stats.zscore(X)) < 3).all(axis=1)
@@ -197,6 +201,7 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import *
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import label_binarize
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
@@ -228,82 +233,134 @@ else:
 mean_tpr = 0.0
 mean_fpr = np.linspace(0, 1, 100)
 
+y_test = []
 y_prob = []
 y_pred = []
 indexes = []
-y_orig = []
+
+# Binarize the output.
+y_bin = label_binarize(y, classes=np.unique(y))
+n_classes = y_bin.shape[1]
 
 # Run 10-fold cross-validation and compute AUROC.
-skf = model_selection.StratifiedKFold(n_folds=10)
+skf = model_selection.StratifiedKFold(n_splits=10)
 for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
     if preprocessing_params['undersampling']:
         train_idx = undersample(X, y, train_idx,
                                 float(preprocessing_params['undersampling_rate']) / 100)
 
-    X_train = X[train_idx]
-    y_train = y[train_idx]
+    X_train_i = X.iloc[train_idx]
+    y_train_i = y_bin[train_idx]
+
+    X_test_i = X.iloc[test_idx]
+    y_test_i = y_bin[test_idx]
 
     if preprocessing_params['oversampling']:
-        minority = X_train[np.where(y_train == 1)]
-        smotted = SMOTE(
+        minority = X_train_i[np.where(y_train_i == 1)]
+        smoted = SMOTE(
             minority, preprocessing_params['undersampling_rate'], 5)
-        X_train = np.vstack((X_train, smotted))
-        y_train = np.append(y_train, np.ones(len(smotted), dtype=np.int32))
+        X_train_i = np.vstack((X_train_i, smoted))
+        y_train_i = np.append(y_train_i, np.ones(len(smoted), dtype=np.int32))
 
-    clf.fit(X_train, y_train)
-    probas_ = clf.predict_proba(X[test_idx])
-    preds_ = clf.predict(X[test_idx])
+    clf.fit(X_train_i, y_train_i)
+    y_pred_i = clf.predict(X_test_i)
+    y_prob_i = clf.predict_proba(X_test_i)
+
+
+
+    # Compute ROC curve and ROC area for each class.
+    fpr = dict()
+    tpr = dict()
+    pre = dict()
+    rec = dict()
+    roc_auc = dict()
+    pr_auc = dict()
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_test_i[:, i], y_pred_i[:, i])
+        pre[i], rec[i], _ = precision_recall_curve(y_test_i[:, i], y_pred_i[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+        pr_auc[i] = auc(pre[i], rec[i])
+
+    # Compute micro-average ROC curve and ROC area.
+    fpr["micro"], tpr["micro"], _ = roc_curve(y_test_i.ravel(), y_pred_i.ravel())
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+
+    # Compute micro-average P-R curve and P-R area.
+    pre["micro"], rec["micro"], _ = \
+        precision_recall_curve(y_test_i.ravel(), y_pred_i.ravel())
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+    pr_auc["micro"] = auc(pre["micro"], rec["micro"])
+
+    # Compute macro-average ROC curve and ROC area.
+
+    # First aggregate all false positive rates.
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+    # Then interpolate all ROC curves at this points.
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(n_classes):
+        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+
+    # Finally average it and compute AUC.
+    mean_tpr /= n_classes
+
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+
 
     # Compute ROC curve and area under the curve.
-    fpr, tpr, thresholds = roc_curve(y[test_idx], probas_[:, 1])
+    #fpr, tpr, thresholds = roc_curve(y_test_i, y_prob_i[:, 1])
 
-    mean_tpr += interp(mean_fpr, fpr, tpr)
-    mean_tpr[0] = 0.0
+    #mean_tpr += interp(mean_fpr, fpr, tpr)
+    #mean_tpr[0] = 0.0
 
     # Define y-values and corresponding predicted probabilities and values.
-    y_orig = np.concatenate((y_orig, y[test_idx]), axis=0)
-    y_prob = np.concatenate((y_prob, probas_[:, 1]), axis=0)
-    y_pred = np.concatenate((y_pred, preds_), axis=0)
+    y_test = np.concatenate((y_test, y_test_i[:, 1]), axis=0)
+    y_prob = np.concatenate((y_prob, y_prob_i[1][:, 1]), axis=0)
+    y_pred = np.concatenate((y_pred, y_pred_i[:, 1]), axis=0)
     indexes = np.concatenate((indexes, test_idx), axis=0)
 
 # Compute TPR and AUROC.
-mean_tpr /= len(skf)
-mean_tpr[-1] = 1.0
-auroc = auc(mean_fpr, mean_tpr)
+#mean_tpr /= len(skf)
+#mean_tpr[-1] = 1.0
+#auroc = auc(mean_fpr, mean_tpr)
 
 # Compute precision-recall curve points and area under P-R curve.
-precision, recall, thresholds = precision_recall_curve(y_orig, y_prob)
-aupr = auc(recall, precision)
+#precision, recall, thresholds = precision_recall_curve(y_test, y_prob)
+#aupr = auc(recall, precision)
 
 # Store a flag for mispredictions.
-errors = np.logical_xor(y_pred, y_orig).astype(int)
+print(y_test)
+errors = np.logical_xor(y_pred, y_test).astype(int)
 
 # Compute overall accuracy.
 accuracy = 1 - (np.sum(errors) / float(len(errors)))
 
 # Store x-y coordinates of ROC curve points.
 roc_points = ''
-for x in zip(mean_fpr, mean_tpr):
+for x in zip(fpr["micro"], tpr["micro"]):
     roc_points += ('[' + str('%.3f' % x[0]) + ',' + str('%.3f' % x[1]) + '],')
 roc_points = roc_points[:-1]
 
 # Store x-y coordinates of P-R curve points.
 prc_points = ''
-for x in zip(recall, precision):
+for x in zip(rec["micro"], pre["micro"]):
     prc_points += ('[' + str('%.3f' % x[0]) + ',' + str('%.3f' % x[1]) + '],')
 prc_points = prc_points[:-1]
 
 # Store confusion matrix as a string with comma-separated values.
 confusion_matrix = str(confusion_matrix(
-    y_original_values, y_pred).tolist()).replace(']', '').replace('[', '')
+    y_test, y_pred).tolist()).replace(']', '').replace('[', '')
 
 # Store a list of the numeric values returned by classification_report().
 clf_report = re.sub(
-    r'[^\d.]+', ', ', classification_report(y_original_values, y_pred))[5:-2]
+    r'[^\d.]+', ', ', classification_report(y_test, y_pred))[5:-2]
 
 # Compute precision, recall, and F1-score.
 precision, recall, f1_score, support = precision_recall_fscore_support(
-    y_original_values, y_pred)
+    y_test, y_pred)
 
 # Limit number of instances saved to the database so report will finish.
 # TODO: Extend reporting to an arbitrary number of instances.
@@ -312,13 +369,12 @@ LAST_INDEX = 1000 if (len(indexes) > 1000) else len(indexes)
 # Sort results by instance number.
 sorted_ix = np.argsort(indexes)
 indexes = ','.join(str(e) for e in indexes[sorted_ix][:LAST_INDEX].astype(int))
-y_original_values = ','.join(
-    str(e) for e in y_original_values[sorted_ix][:LAST_INDEX].astype(int))
+y_test = ','.join(str(e) for e in y_test[sorted_ix][:LAST_INDEX].astype(int))
 y_pred = ','.join(str(e) for e in y_pred[sorted_ix][:LAST_INDEX].astype(int))
 errors = ','.join(str(e) for e in errors[sorted_ix][:LAST_INDEX]).replace(
     '0', ' ').replace('1', '&#x2717;')
-y_prob = ','.join(str(e) for e in np.around(
-    y_prob[sorted_ix][:LAST_INDEX], decimals=4))
+y_prob = ','.join(str(e) for e in np.around(y_prob[sorted_ix][:LAST_INDEX],
+                                            decimals=4))
 
     
 ##################################
@@ -330,7 +386,7 @@ report_data = json.dumps({'roc_points': roc_points,
                           'confusion_matrix': confusion_matrix, 
                           'classification_report': clf_report,
                           'indexes': indexes, 
-                          'y_original_values': y_original_values, 
+                          'y_original_values': y_test, 
                           'y_pred': y_pred, 
                           'y_prob': y_prob, 
                           'errors': errors
@@ -340,13 +396,13 @@ report_data = json.dumps({'roc_points': roc_points,
 stop = timeit.default_timer()
 cursor.execute("UPDATE ode_results SET finished=1, runtime=" + \
                str(stop - start) + \
-               ", aupr=" + str(aupr) + \
-               ", auroc=" + str(auroc) + \
+               ", aupr=" + str( pr_auc["micro"]) + \
+               ", auroc=" + str( roc_auc["micro"]) + \
                ", accuracy=" + str(accuracy) + \
                ", precision_score=" + str(precision[1]) + \
                ", recall_score=" + str(recall[1]) + \
                ", f1_score=" + str(f1_score[1]) + \
-               ", report_data=\'" + report_data + "\' WHERE id=" + analysisID
+               ", report_data=\'" + report_data + "\' WHERE id=" + analysis_id
                )
 db.commit()
 

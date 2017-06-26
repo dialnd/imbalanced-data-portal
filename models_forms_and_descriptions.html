@@ -85,11 +85,11 @@ DECISION TREE -- FORM
         $('#max_features-slider').Link('lower').to($('#max_features-value'));
         $('#max_features-slider').Link('lower').to($('#max_features'));
         $('#min_samples_split-slider').noUiSlider({
-            start: [1],
+            start: [2],
             step: 1,
             connect: "lower",
             range: {
-                'min': [1],
+                'min': [2],
                 'max': [NUM_INSTANCES]
             }
         });
