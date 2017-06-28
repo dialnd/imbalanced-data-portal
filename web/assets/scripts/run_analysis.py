@@ -30,7 +30,6 @@ cursor = db.cursor()
 cursor.execute(
     "SELECT dataset_id, preprocessing_params, params, model_id FROM ode_results WHERE id=" + analysis_id)
 analysis = cursor.fetchone()
-print(analysis)
 
 # Find the dataset to be used by the current analysis.
 cursor.execute("SELECT * FROM ode_dataset WHERE id=" + str(analysis[0]))
@@ -238,12 +237,20 @@ y_prob = []
 y_pred = []
 indexes = []
 
-# Binarize the output.
-y_bin = label_binarize(y, classes=np.unique(y))
-n_classes = y_bin.shape[1]
+if len(np.unique(y)) > 2:
+    # Binarize the output.
+    y_bin = label_binarize(y, classes=np.unique(y))
+    n_classes = y_bin.shape[1]
+elif len(np.unique(y)) == 2:
+    # Binary output.
+    y_bin = y.reshape((-1, 1))
+    n_classes = 2
+else:
+    print("Need 2 or more class values.")
 
 # Run 10-fold cross-validation and compute AUROC.
-skf = model_selection.StratifiedKFold(n_splits=10)
+n_splits = 10
+skf = model_selection.StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=0)
 for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
     if preprocessing_params['undersampling']:
         train_idx = undersample(X, y, train_idx,
@@ -254,19 +261,17 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
 
     X_test_i = X.iloc[test_idx]
     y_test_i = y_bin[test_idx]
-
-    if preprocessing_params['oversampling']:
-        minority = X_train_i[np.where(y_train_i == 1)]
-        smoted = SMOTE(
-            minority, preprocessing_params['undersampling_rate'], 5)
-        X_train_i = np.vstack((X_train_i, smoted))
-        y_train_i = np.append(y_train_i, np.ones(len(smoted), dtype=np.int32))
+    
+    #if preprocessing_params['oversampling']:
+    #    minority = X_train_i[np.where(y_train_i == 1)]
+    #    smoted = SMOTE(
+    #        minority, preprocessing_params['undersampling_rate'], 5)
+    #    X_train_i = np.vstack((X_train_i, smoted))
+    #    y_train_i = np.append(y_train_i, np.ones(len(smoted), dtype=np.int32))
 
     clf.fit(X_train_i, y_train_i)
     y_pred_i = clf.predict(X_test_i)
-    y_prob_i = clf.predict_proba(X_test_i)
-
-
+    y_prob_i = np.array(clf.predict_proba(X_test_i))
 
     # Compute ROC curve and ROC area for each class.
     fpr = dict()
@@ -275,64 +280,76 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
     rec = dict()
     roc_auc = dict()
     pr_auc = dict()
-    for i in range(n_classes):
-        fpr[i], tpr[i], _ = roc_curve(y_test_i[:, i], y_pred_i[:, i])
-        pre[i], rec[i], _ = precision_recall_curve(y_test_i[:, i], y_pred_i[:, i])
-        roc_auc[i] = auc(fpr[i], tpr[i])
-        pr_auc[i] = auc(pre[i], rec[i])
+    if n_classes > 2:
+        for i in range(n_classes):
+            fpr[i], tpr[i], _ = roc_curve(y_test_i[:, i], y_pred_i[:, i])
+            pre[i], rec[i], _ = precision_recall_curve(y_test_i[:, i], y_pred_i[:, i])
+            roc_auc[i] = auc(fpr[i], tpr[i])
+            pr_auc[i] = auc(pre[i], rec[i])
 
-    # Compute micro-average ROC curve and ROC area.
-    fpr["micro"], tpr["micro"], _ = roc_curve(y_test_i.ravel(), y_pred_i.ravel())
+        # Compute micro-average ROC curve and ROC area.
+        fpr["micro"], tpr["micro"], _ = roc_curve(y_test_i.ravel(), y_pred_i.ravel())
+        roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+
+        # Compute micro-average P-R curve and P-R area.
+        pre["micro"], rec["micro"], _ = \
+            precision_recall_curve(y_test_i.ravel(), y_pred_i.ravel())
+        roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+        pr_auc["micro"] = auc(pre["micro"], rec["micro"])
+
+        # Compute macro-average ROC curve and ROC area.
+
+        # First aggregate all false positive rates.
+        all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+        # Then interpolate all ROC curves at this points.
+        mean_tpr = np.zeros_like(all_fpr)
+        for i in range(n_classes):
+            mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+
+        # Finally average it and compute AUC.
+        mean_tpr /= n_classes
+
+        fpr["macro"] = all_fpr
+        tpr["macro"] = mean_tpr
+        roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+        # Compute ROC curve and area under the curve.
+        #fpr, tpr, thresholds = roc_curve(y_test_i, y_prob_i[:, 1])
+
+        #mean_tpr += interp(mean_fpr, fpr, tpr)
+        #mean_tpr[0] = 0.0
+
+        # Define y-values and corresponding predicted probabilities and values.
+        y_test = np.concatenate((y_test, y[test_idx]), axis=0)
+        y_prob = np.concatenate((y_prob, np.argmax(y_pred_i, axis=1)), axis=0)
+        y_pred = np.concatenate((y_pred, np.argmax(y_pred_i, axis=1)), axis=0)
+        indexes = np.concatenate((indexes, test_idx), axis=0)
+    else:
+        # Compute ROC curve and area under the curve.
+        fpr["micro"], tpr["micro"], _ = roc_curve(y[test_idx], y_prob_i[:, 1])
+
+        mean_tpr += interp(mean_fpr, fpr["micro"], tpr["micro"])
+        mean_tpr[0] = 0.0
+
+        # Define y-values and corresponding predicted probabilities and values.
+        y_test = np.concatenate((y_test, y[test_idx]), axis=0)
+        y_prob = np.concatenate((y_prob, y_prob_i[:, 1]), axis=0)
+        y_pred = np.concatenate((y_pred, y_pred_i), axis=0)
+        indexes = np.concatenate((indexes, test_idx), axis=0)
+
+if n_classes == 2:
+    # Compute TPR and AUROC
+    mean_tpr /= n_splits
+    mean_tpr[-1] = 1.0
+    auroc = auc(mean_fpr, mean_tpr)
+
+    # Compute precision-recall curve points and area under the PR-curve.
+    pre["micro"], rec["micro"], _ = precision_recall_curve(y_test, y_prob)
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
-
-    # Compute micro-average P-R curve and P-R area.
-    pre["micro"], rec["micro"], _ = \
-        precision_recall_curve(y_test_i.ravel(), y_pred_i.ravel())
-    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
-    pr_auc["micro"] = auc(pre["micro"], rec["micro"])
-
-    # Compute macro-average ROC curve and ROC area.
-
-    # First aggregate all false positive rates.
-    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
-
-    # Then interpolate all ROC curves at this points.
-    mean_tpr = np.zeros_like(all_fpr)
-    for i in range(n_classes):
-        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
-
-    # Finally average it and compute AUC.
-    mean_tpr /= n_classes
-
-    fpr["macro"] = all_fpr
-    tpr["macro"] = mean_tpr
-    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
-
-
-
-    # Compute ROC curve and area under the curve.
-    #fpr, tpr, thresholds = roc_curve(y_test_i, y_prob_i[:, 1])
-
-    #mean_tpr += interp(mean_fpr, fpr, tpr)
-    #mean_tpr[0] = 0.0
-
-    # Define y-values and corresponding predicted probabilities and values.
-    y_test = np.concatenate((y_test, y_test_i[:, 1]), axis=0)
-    y_prob = np.concatenate((y_prob, y_prob_i[1][:, 1]), axis=0)
-    y_pred = np.concatenate((y_pred, y_pred_i[:, 1]), axis=0)
-    indexes = np.concatenate((indexes, test_idx), axis=0)
-
-# Compute TPR and AUROC.
-#mean_tpr /= len(skf)
-#mean_tpr[-1] = 1.0
-#auroc = auc(mean_fpr, mean_tpr)
-
-# Compute precision-recall curve points and area under P-R curve.
-#precision, recall, thresholds = precision_recall_curve(y_test, y_prob)
-#aupr = auc(recall, precision)
+    pr_auc["micro"] = auc(rec["micro"], pre["micro"])
 
 # Store a flag for mispredictions.
-print(y_test)
 errors = np.logical_xor(y_pred, y_test).astype(int)
 
 # Compute overall accuracy.
@@ -396,13 +413,14 @@ report_data = json.dumps({'roc_points': roc_points,
 stop = timeit.default_timer()
 cursor.execute("UPDATE ode_results SET finished=1, runtime=" + \
                str(stop - start) + \
-               ", aupr=" + str( pr_auc["micro"]) + \
-               ", auroc=" + str( roc_auc["micro"]) + \
+               ", aupr=" + str(pr_auc["micro"]) + \
+               ", auroc=" + str(roc_auc["micro"]) + \
                ", accuracy=" + str(accuracy) + \
                ", precision_score=" + str(precision[1]) + \
                ", recall_score=" + str(recall[1]) + \
                ", f1_score=" + str(f1_score[1]) + \
-               ", report_data=\'" + report_data + "\' WHERE id=" + analysis_id
+               ", report_data=\'" + report_data + \
+               "\' WHERE id=" + analysis_id
                )
 db.commit()
 

@@ -3,6 +3,11 @@ To install dependencies:
 php composer.phar install
 
 
+For the database, create a table named symfony (via SQL) and run:
+----------------------------------------------------------------------
+php app/console doctrine:schema:update --force
+
+
 To run the app:
 ----------------------------------------------------------------------
 php app/console server:run
@@ -19,11 +24,6 @@ To see changes on the production ("prod") environment:
 ----------------------------------------------------------------------
 php app/console cache:clear --env=prod
 php app/console cache:clear (clears the dev env)
-
-
-For the database, create a table named symfony (via SQL) and run:
-----------------------------------------------------------------------
-php app/console doctrine:schema:update --force
 
 
 To create bundles using the Symfony console:

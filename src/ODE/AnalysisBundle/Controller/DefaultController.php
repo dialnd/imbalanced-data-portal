@@ -144,6 +144,7 @@ class DefaultController extends Controller
                 'roc_points' => $report_data['roc_points'],
                 'prc_points' => $report_data['prc_points'],
                 'confusion_matrix' => explode(",", $report_data['confusion_matrix']),
+                'confusion_matrix_size' => sqrt(count(explode(",", $report_data['confusion_matrix']))),
                 'classification_report' => explode(",", $report_data['classification_report']),
                 'indexes' => explode(",", $report_data['indexes']),
                 'y_original_values' => explode(",", $report_data['y_original_values']),
