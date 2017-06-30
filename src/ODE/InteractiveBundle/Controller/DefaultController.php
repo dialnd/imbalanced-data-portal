@@ -460,7 +460,7 @@ class DefaultController extends Controller
         $response = new Response($graphs);
         $response->setStatusCode(200);
         $response->headers->set('Content-Type', 'application/json');
-        $response->headers->set( 'X-Status-Code', 200 );
+        $response->headers->set('X-Status-Code', 200);
         return $response;
     }
 
@@ -499,7 +499,7 @@ class DefaultController extends Controller
 
         $model_name = $this->model_map[$model->getName()];
         $model_params = json_encode($workflow->getParameterization());
-        file_put_contents(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/parameterization.json', $model_params);
+        file_put_contents(__DIR__.'/../../../../web/assets/workflows/'.$w_id.'/parameterization.json', $model_params);
         #$model_params =
 
         $script = 'run_model.py';
@@ -507,7 +507,7 @@ class DefaultController extends Controller
 
         $this->runPython($script, $script_args);
 
-        $res = json_decode(file_get_contents(__DIR__.'/../../../../web/assets/scripts/../workflows/'.$w_id.'/results.json'));
+        $res = json_decode(file_get_contents(__DIR__.'/../../../../web/assets/workflows/'.$w_id.'/results.json'));
         $result = array();
         foreach ($res as $key => $value) {
             $result[$key] = $value;
@@ -523,13 +523,13 @@ class DefaultController extends Controller
                 'aupr' => $result['aupr'],
                 'roc_points' => $result['roc_points'],
                 'prc_points' => $result['prc_points'],
-                'confusion_matrix' => explode(",",$result['confusion_matrix']),
-                'classification_report' => explode(",",$result['classification_report']),
-                'indexes' => explode(",",$result['indexes']),
+                'confusion_matrix' => explode(",", $result['confusion_matrix']),
+                'classification_report' => explode(",", $result['classification_report']),
+                'indexes' => explode(",", $result['indexes']),
                 'y_original_values' => explode(",",$result['y_original_values']),
-                'y_pred' => explode(",",$result['y_pred']),
-                'errors' => explode(",",$result['errors']),
-                'y_prob' => explode(",",$result['y_prob']),
+                'y_pred' => explode(",", $result['y_pred']),
+                'errors' => explode(",", $result['errors']),
+                'y_prob' => explode(",", $result['y_prob']),
                 'model' => $model->getName(),
                 'dataset_name' => $dataset->getName(),
                 'runtime' => $result['runtime'],

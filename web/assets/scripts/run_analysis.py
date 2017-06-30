@@ -10,6 +10,16 @@ import numpy as np
 import pandas as pd
 import patsy
 import pymysql
+from scipy import interp, stats
+from sklearn import decomposition, model_selection, preprocessing
+from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.metrics import *
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import label_binarize
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 
 #######################
@@ -131,12 +141,10 @@ def SMOTE(T, N, k, h=1.0):
 
     return S
 
+    
 ########################################
 # Retrieving Dataset and Preprocessing #
 ########################################
-
-from scipy import stats
-from sklearn import decomposition, preprocessing
 
 df = pd.read_csv(os.path.join(os.path.dirname(current_dir), 
                  'datasets', str(dataset[8]) + '.csv'))
@@ -192,35 +200,23 @@ if preprocessing_params['pca']:
 # Running Experiment #
 ######################
 
-from scipy import interp
-from scipy.stats import itemfreq
-from sklearn import model_selection
-from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier, RandomForestClassifier
-from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.metrics import *
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import label_binarize
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-
 # Declare all classifiers (these keys map to the keys in ode_models).
 clfs = {
     1: DecisionTreeClassifier(),
-    2: GaussianNB(),
-    3: KNeighborsClassifier(),
-    4: LogisticRegression(),
-    5: SVC(),
-    6: SGDClassifier(),
+    2: ExtraTreesClassifier(),
+    3: GaussianNB(),
+    4: GradientBoostingClassifier(),
+    5: KNeighborsClassifier(),
+    6: LogisticRegression(),
     7: RandomForestClassifier(),
-    8: ExtraTreesClassifier(),
-    9: GradientBoostingClassifier()
+    8: SGDClassifier(),
+    9: SVC()
 }
 
 model_params = ast.literal_eval(analysis[2])
 
 # Needed to avoid "shuffle must be True or False error when using SGDClassifier".
-if (analysis[3] == 6):
+if (analysis[3] == 8):
     model_params['shuffle'] = bool(model_params['shuffle'])
 
 # Select the correct classifier and set user-specified parameters.
@@ -262,12 +258,12 @@ for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
     X_test_i = X.iloc[test_idx]
     y_test_i = y_bin[test_idx]
     
-    #if preprocessing_params['oversampling']:
-    #    minority = X_train_i[np.where(y_train_i == 1)]
-    #    smoted = SMOTE(
-    #        minority, preprocessing_params['undersampling_rate'], 5)
-    #    X_train_i = np.vstack((X_train_i, smoted))
-    #    y_train_i = np.append(y_train_i, np.ones(len(smoted), dtype=np.int32))
+    if preprocessing_params['oversampling']:
+        minority = X_train_i[np.where(y_train_i == 1)]
+        smoted = SMOTE(
+            minority, preprocessing_params['undersampling_rate'], 5)
+        X_train_i = np.vstack((X_train_i, smoted))
+        y_train_i = np.append(y_train_i, np.ones(len(smoted), dtype=np.int32))
 
     clf.fit(X_train_i, y_train_i)
     y_pred_i = clf.predict(X_test_i)
@@ -393,7 +389,7 @@ errors = ','.join(str(e) for e in errors[sorted_ix][:LAST_INDEX]).replace(
 y_prob = ','.join(str(e) for e in np.around(y_prob[sorted_ix][:LAST_INDEX],
                                             decimals=4))
 
-    
+
 ##################################
 # Saving Results to the Database #
 ##################################
