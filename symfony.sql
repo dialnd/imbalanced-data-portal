@@ -38,15 +38,6 @@ CREATE TABLE IF NOT EXISTS `ode_dataset` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=4 ;
 
---
--- Dumping data for table `ode_dataset`
---
-
-INSERT INTO `ode_dataset` (`id`, `name`, `description`, `num_instances`, `num_features`, `filetype`, `filesize`, `filename`) VALUES
-(1, 'Pima Indians Diabetes', '', 768, 8, 'CSV', 24576, 'pima-indians-diabetes'),
-(2, 'Seismic Bumps', '', 2584, 12, 'CSV', 84020, 'seismic-bumps'),
-(3, 'Adult Salary', '', 48842, 14, 'CSV', 3844216, 'salary');
-
 -- --------------------------------------------------------
 
 --
@@ -156,14 +147,6 @@ CREATE TABLE IF NOT EXISTS `ode_users` (
   UNIQUE KEY `UNIQ_C7857F0E92FC23A8` (`username_canonical`),
   UNIQUE KEY `UNIQ_C7857F0EA0D96FBF` (`email_canonical`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=3 ;
-
---
--- Dumping data for table `ode_users`
---
-
-INSERT INTO `ode_users` (`id`, `username`, `username_canonical`, `email`, `email_canonical`, `enabled`, `salt`, `password`, `last_login`, `locked`, `expired`, `expires_at`, `confirmation_token`, `password_requested_at`, `roles`, `credentials_expired`, `credentials_expire_at`, `firstname`, `lastname`, `affiliation`, `profilePicturePath`, `member_since`) VALUES
-(1, 'eaguiar', 'eaguiar', 'eaguiar@nd.edu', 'eaguiar@nd.edu', 1, 'l142nbg066ocgccgcwcw40kcosw0gco', 'ylp+tISbZF+p+GwIw+T4DzTJ6lUpPQ1u/+OUOj5ZCGWpJd/vg7vEpXh+fdjM903WM3AhQxcGUuClgpF7ttF70Q==', '2015-05-22 16:29:48', 0, 0, NULL, NULL, NULL, 'a:0:{}', 0, NULL, 'Everaldo', 'Aguiar', 'University of Notre Dame', '/assets/profilepictures/0eb8ec19221662eb03da4406eb78bbab', 'April 29, 2015, 7:46 pm CDT'),
-(2, 'obama', 'obama', 'obama@whitehouse.gov', 'obama@whitehouse.gov', 1, 'hjn4aq5nxh4w04o8w0408co04cksgsw', 'ahbBQr3XdCA0AHJXLm1C6/vcHx9asEF8Bo3ZBvyIGKxCsze1UAXWB453yX2rW8TK+HQpSTygk40KhcrkWiF9mA==', '2015-05-22 13:07:02', 0, 0, NULL, NULL, NULL, 'a:0:{}', 0, NULL, 'Barack', 'Obama', 'United States', '/assets/profilepictures/a40c0ee90451a127cc66eef339c378cd', 'April 29, 2015, 7:51 pm CDT');
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
