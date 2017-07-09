@@ -8,7 +8,6 @@ import timeit
 
 import numpy as np
 import pandas as pd
-import patsy
 import pymysql
 from scipy import interp, stats
 from sklearn import decomposition, model_selection, preprocessing
@@ -159,11 +158,6 @@ elif(preprocessing_params['missing_data'] == 'average'):
     X = X.fillna(X.mean())
 elif (preprocessing_params['missing_data'] == 'interpolation'):
     X = X.interpolate()
-
-#s = ' + '.join(X.columns) + ' -1'
-# Note: The encoding below could create very large dataframes for datasets.
-# with many categorical features.
-#X = patsy.dmatrix(s, X, return_type='dataframe').values
 
 # Remove outliers.
 # TODO: Move this to traning step of K-fold so as to keep test untouched?
