@@ -28,6 +28,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE IF NOT EXISTS `ode_dataset` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `path` varchar(100) COLLATE utf8_unicode_ci,
   `name` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `description` longtext COLLATE utf8_unicode_ci NOT NULL,
   `num_instances` int(11) NOT NULL,
@@ -141,8 +142,8 @@ CREATE TABLE IF NOT EXISTS `ode_users` (
   `firstname` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `lastname` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `affiliation` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `profilePicturePath` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `member_since` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `profilePicturePath` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UNIQ_C7857F0E92FC23A8` (`username_canonical`),
   UNIQUE KEY `UNIQ_C7857F0EA0D96FBF` (`email_canonical`)
